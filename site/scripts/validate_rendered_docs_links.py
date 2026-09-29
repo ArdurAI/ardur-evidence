@@ -12,7 +12,7 @@ from urllib.parse import unquote, urlparse
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 REPO_HOST = "github.com"
-REPO_PATH = "/ArdurAI/ardur"
+REPO_PATH = "/ArdurAI/ardur-evidence"
 
 ROOT_DOCS = {
     "CODE_OF_CONDUCT.md",

@@ -92,4 +92,4 @@ When Phase 7 publishes, both documents update with the same artifact paths. A re
 
 ## Standing question for the reader
 
-If you have a deployment shape that doesn't fit the three projected shapes above (single-agent dev, production multi-agent, high-throughput automation), tell us. The benchmark methodology can take additional shapes. [GitHub Discussions](https://github.com/ArdurAI/ardur/discussions) Q&A is the right place for this; we read it.
+If you have a deployment shape that doesn't fit the three projected shapes above (single-agent dev, production multi-agent, high-throughput automation), tell us. The benchmark methodology can take additional shapes. [GitHub Discussions](https://github.com/ArdurAI/ardur-evidence/discussions) Q&A is the right place for this; we read it.

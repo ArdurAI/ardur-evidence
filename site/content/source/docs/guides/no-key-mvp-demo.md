@@ -55,7 +55,7 @@ first-run target.
 
 ## Next no-key paths
 
-- Run [`scripts/run-rwt-phase1-fresh-user.py`](https://github.com/ArdurAI/ardur/blob/__ARDUR_SOURCE_REF__/scripts/run-rwt-phase1-fresh-user.py)
+- Run [`scripts/run-rwt-phase1-fresh-user.py`](https://github.com/ArdurAI/ardur-evidence/blob/__ARDUR_SOURCE_REF__/scripts/run-rwt-phase1-fresh-user.py)
   for the broader redacted fresh-user evidence bundle.
 - Follow the [Claude Code MVP quickstart](/__ardur_internal__/source/docs/guides/claude-code-mvp-quickstart/) for
   the no-key hook evidence path, or its optional live-Claude section if the

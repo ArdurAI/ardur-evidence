@@ -2,7 +2,7 @@
 title: "Reproducing AuditBench Harness Fixtures"
 description: "This document describes how to reproduce the deterministic AuditBench harness"
 source_path: "REPRODUCE.md"
-source_sha256: "98a233cc33bdb726e6cebf7088d4bae6294830ef36afab6b865ca56c1eb2cd34"
+source_sha256: "4f7db0f54f5fecfa7beb82cf801db8b72427f33088b43a234731d258372a65ea"
 weight: 100
 maturity: ["public-now"]
 claim_types: ["documentation"]
@@ -58,7 +58,7 @@ rather than trivially agreeing.
 
 ```sh
 # 1. Clone (or pull) the repository
-git clone https://github.com/ArdurAI/ardur.git
+git clone https://github.com/ArdurAI/ardur-evidence.git
 cd ardur
 
 # 2. Run the benchmark

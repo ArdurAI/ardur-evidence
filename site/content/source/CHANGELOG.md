@@ -2,7 +2,7 @@
 title: "Changelog"
 description: "All notable changes to Ardur will be documented in this file."
 source_path: "CHANGELOG.md"
-source_sha256: "8e1e5b2d3c399b8f4d6c3e2d02816eb38cadebe7c631b85b3776b95f3e9cb219"
+source_sha256: "36e9ed5c9591b3b02338d085d94785b7196039d260c61edb7417011c8d535118"
 weight: 100
 maturity: ["public-now"]
 claim_types: ["documentation"]
@@ -31,6 +31,14 @@ All notable changes to Ardur will be documented in this file.
   commands and returns a confirmation with `report_sha256`.
 - `ardur latency-gate evaluate` now supports `--output` and `--redact-paths`,
   making it consistent with every other JSON-producing CLI command.
+
+### Changed
+- The repository was renamed from `ArdurAI/ardur` to `ArdurAI/ardur-evidence`
+  on 2026-09-29, and the project is now called Ardur Evidence. Repository
+  links, package URLs and the GitHub Pages address
+  (`https://ardurai.github.io/ardur-evidence/`) point at the new name.
+  Protocol identifiers (`ardur.*` schema names, `application/ardur.er+jwt`)
+  and the Go module path are unchanged.
 
 ### Fixed
 - Non-`EADDRINUSE` `OSError` from `ardur start` and `ardur hub` now produces

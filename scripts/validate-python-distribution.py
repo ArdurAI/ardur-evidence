@@ -29,11 +29,11 @@ CHANGELOG_RELEASE_HEADING = re.compile(
     r"^## \[(?P<version>[^]]+)\] — (?P<release_date>\S+)$", re.MULTILINE
 )
 EXPECTED_URLS = {
-    "Homepage": "https://github.com/ArdurAI/ardur",
-    "Documentation": "https://github.com/ArdurAI/ardur/tree/main/docs",
-    "Repository": "https://github.com/ArdurAI/ardur",
-    "Issues": "https://github.com/ArdurAI/ardur/issues",
-    "Discussions": "https://github.com/ArdurAI/ardur/discussions",
+    "Homepage": "https://github.com/ArdurAI/ardur-evidence",
+    "Documentation": "https://github.com/ArdurAI/ardur-evidence/tree/main/docs",
+    "Repository": "https://github.com/ArdurAI/ardur-evidence",
+    "Issues": "https://github.com/ArdurAI/ardur-evidence/issues",
+    "Discussions": "https://github.com/ArdurAI/ardur-evidence/discussions",
 }
 EXPECTED_SUMMARY = "Runtime governance and signed evidence for AI agent tool calls"
 EXPECTED_OS_CLASSIFIER = "Operating System :: POSIX"

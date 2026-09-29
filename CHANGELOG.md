@@ -15,6 +15,14 @@ All notable changes to Ardur will be documented in this file.
 - `ardur latency-gate evaluate` now supports `--output` and `--redact-paths`,
   making it consistent with every other JSON-producing CLI command.
 
+### Changed
+- The repository was renamed from `ArdurAI/ardur` to `ArdurAI/ardur-evidence`
+  on 2026-09-29, and the project is now called Ardur Evidence. Repository
+  links, package URLs and the GitHub Pages address
+  (`https://ardurai.github.io/ardur-evidence/`) point at the new name.
+  Protocol identifiers (`ardur.*` schema names, `application/ardur.er+jwt`)
+  and the Go module path are unchanged.
+
 ### Fixed
 - Non-`EADDRINUSE` `OSError` from `ardur start` and `ardur hub` now produces
   structured JSON (`start_oserror` / `hub_oserror`) with `error_code`,

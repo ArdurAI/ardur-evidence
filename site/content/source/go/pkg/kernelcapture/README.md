@@ -67,7 +67,7 @@ This package is the Ardur Linux proof harness for process-exec capture with pair
     baseline/reference/candidate observations, same-VM daemon CPU ratios, peak
     RSS, authenticated health, exclusive capture/classification/fingerprint
     ledgers, artifact digests, and fail-closed reviewed-budget enforcement; the
-    [strict report tests](https://github.com/ArdurAI/ardur/blob/__ARDUR_SOURCE_REF__/go/pkg/kernelcapture/agent_recognition_benchmark_test.go) bind those claims
+    [strict report tests](https://github.com/ArdurAI/ardur-evidence/blob/__ARDUR_SOURCE_REF__/go/pkg/kernelcapture/agent_recognition_benchmark_test.go) bind those claims
     to the committed evidence and budgets.
 - Includes a deterministic maintained-corpus evaluation gate:
   - validates versioned samples, reviewed thresholds, sanitized provenance,

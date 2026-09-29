@@ -147,4 +147,4 @@ SPIRE, and a caller-provided `spiffe_id` remains self-asserted. See the
 
 ## License
 
-MIT — see [../LICENSE](https://github.com/ArdurAI/ardur/blob/__ARDUR_SOURCE_REF__/LICENSE).
+MIT — see [../LICENSE](https://github.com/ArdurAI/ardur-evidence/blob/__ARDUR_SOURCE_REF__/LICENSE).

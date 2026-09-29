@@ -167,8 +167,8 @@ def test_sync_runs_for_dependabot_pr_when_human_updates_base() -> None:
         condition,
         actor="maintainer",
         author="dependabot[bot]",
-        head_repo="ArdurAI/ardur",
-        repository="ArdurAI/ardur",
+        head_repo="ArdurAI/ardur-evidence",
+        repository="ArdurAI/ardur-evidence",
         head_ref="dependabot/github_actions/actions-checkout-7.0.1",
     )
 

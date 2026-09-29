@@ -108,7 +108,7 @@ Share `bundle.redacted.json` only after checking:
 
 Related references:
 
-- [`scripts/run-rwt-phase1-fresh-user.py`](https://github.com/ArdurAI/ardur/blob/__ARDUR_SOURCE_REF__/scripts/run-rwt-phase1-fresh-user.py)
+- [`scripts/run-rwt-phase1-fresh-user.py`](https://github.com/ArdurAI/ardur-evidence/blob/__ARDUR_SOURCE_REF__/scripts/run-rwt-phase1-fresh-user.py)
 - [`docs/guides/claude-code-mvp-quickstart.md`](/__ardur_internal__/source/docs/guides/claude-code-mvp-quickstart/)
 - [`docs/reference/cli.md`](/__ardur_internal__/source/docs/reference/cli/)
 - [`docs/coverage-map.md`](/__ardur_internal__/source/docs/coverage-map/)

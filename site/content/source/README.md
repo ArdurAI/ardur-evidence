@@ -1,8 +1,8 @@
 ---
-title: "Ardur"
+title: "Ardur Evidence"
 description: "Ardur governs AI-agent tool calls that pass through a configured adapter or"
 source_path: "README.md"
-source_sha256: "046a6d5e46c970f5d5499f596e2559ea4430d1c4479faa564bad36d7278558f7"
+source_sha256: "810687416f6aa9d46943c2f4aadc11e890f6962684b60eb14ce17e95f668dff0"
 weight: 100
 maturity: ["public-now"]
 claim_types: ["orientation", "runtime-boundary"]
@@ -17,6 +17,13 @@ evidence_levels: ["code-and-doc"]
 This page is generated from the public repository source file. Edit the source file, then run `python3 site/scripts/sync_source_docs.py` to refresh the Hugo mirror.
 {{< /proof-status >}}
 
+> **Renamed on 2026-09-29.** This repository was `ArdurAI/ardur`. It is being
+> refocused as **Ardur Evidence**: the signed execution-receipt format and the
+> offline verifier (`ardur-verify`). The name *Ardur* now refers to the
+> [Ardur app](https://github.com/ArdurAI/ardur-bot). Parts of this repository
+> that are not about evidence are being archived. See the
+> [Naming Note](#naming-note).
+
 Ardur governs AI-agent tool calls that pass through a configured adapter or
 proxy. It checks mission, resource, budget, and delegation constraints before
 that integration dispatches the call, then emits an issuer-signed,
@@ -30,9 +37,9 @@ released only when execution never started. This does not infer semantic risk
 or hidden side effects; see the
 [typed risk-budget reference](/__ardur_internal__/source/docs/reference/risk-budgets/).
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/ArdurAI/ardur/blob/__ARDUR_SOURCE_REF__/LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/ArdurAI/ardur-evidence/blob/__ARDUR_SOURCE_REF__/LICENSE)
 [![Status](https://img.shields.io/badge/status-pre--release-blue)](/__ardur_internal__/source/status/)
-[![Discussions](https://img.shields.io/badge/GitHub-Discussions-181717?logo=github)](https://github.com/ArdurAI/ardur/discussions)
+[![Discussions](https://img.shields.io/badge/GitHub-Discussions-181717?logo=github)](https://github.com/ArdurAI/ardur-evidence/discussions)
 
 This public repo contains the product intent, research-informed positioning,
 public specs, the Python governance runtime, Go packages for eBPF kernel
@@ -162,7 +169,7 @@ key; the local demo additionally avoids manual bearer-token and Docker setup.
 ### Local governance loop
 
 ```bash
-git clone https://github.com/ArdurAI/ardur.git && cd ardur
+git clone https://github.com/ArdurAI/ardur-evidence.git && cd ardur
 ./scripts/setup-dev.sh --skip-go
 source python/.venv/bin/activate
 python scripts/run-no-key-mvp-demo.py
@@ -193,7 +200,7 @@ for the expected bundle result and the optional live-Claude path.
 
 ### Authenticated Docker evaluator
 
-`make demo` plus [`scripts/verify-mvp.sh`](https://github.com/ArdurAI/ardur/blob/__ARDUR_SOURCE_REF__/scripts/verify-mvp.sh) is the
+`make demo` plus [`scripts/verify-mvp.sh`](https://github.com/ArdurAI/ardur-evidence/blob/__ARDUR_SOURCE_REF__/scripts/verify-mvp.sh) is the
 authenticated Docker path. Configure `ARDUR_API_TOKEN` before starting it; the
 [MVP evaluator guide](/__ardur_internal__/source/docs/mvp-evaluator-guide/) contains the tested,
 copy-paste authenticated lifecycle. CI starts this full stack from fresh named
@@ -339,11 +346,16 @@ credential identity at issuance. A `spiffe_id` supplied to Python issuance
 remains caller-provided and self-asserted even when the service has fetched its
 own SVID.
 
-If you'd use an integration that isn't listed, file an [integration request](https://github.com/ArdurAI/ardur/issues/new?template=integration_request.yml) — it's the strongest signal we have for prioritisation.
+If you'd use an integration that isn't listed, file an [integration request](https://github.com/ArdurAI/ardur-evidence/issues/new?template=integration_request.yml) — it's the strongest signal we have for prioritisation.
 
 ## Naming Note
 
-`Ardur` is the public product name.
+`Ardur Evidence` is this project's public name. It was called `Ardur`, and the
+repository was `ArdurAI/ardur`, until 2026-09-29; `Ardur` now names the Ardur
+app. Protocol identifiers keep their existing `ardur.*` names, for example the
+`ardur.execution_receipt.v0.2` schema and the `application/ardur.er+jwt` token
+type, so receipts issued before the rename stay valid. The Go module path is
+unchanged for now.
 
 Some implementation and protocol surfaces still use `VIBAP`, `MCEP`, and
 related protocol names. Those names are part of the technical lineage and are

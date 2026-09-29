@@ -192,7 +192,7 @@ metrics=prometheus-ok
 Every curl call uses `--fail`, so an authentication or schema error makes the
 block exit non-zero instead of turning an HTTP 4xx body into a misleading pass.
 The same lifecycle and payload shapes are also exercised by
-[`scripts/verify-mvp.sh`](https://github.com/ArdurAI/ardur/blob/__ARDUR_SOURCE_REF__/scripts/verify-mvp.sh).
+[`scripts/verify-mvp.sh`](https://github.com/ArdurAI/ardur-evidence/blob/__ARDUR_SOURCE_REF__/scripts/verify-mvp.sh).
 
 ## What the lifecycle proves
 
@@ -205,7 +205,7 @@ The same lifecycle and payload shapes are also exercised by
 
 The walkthrough verifies that non-empty signed tokens are returned. For a local
 cryptographic signature-verification demonstration, run
-[`scripts/run-no-key-mvp-demo.py`](https://github.com/ArdurAI/ardur/blob/__ARDUR_SOURCE_REF__/scripts/run-no-key-mvp-demo.py), which
+[`scripts/run-no-key-mvp-demo.py`](https://github.com/ArdurAI/ardur-evidence/blob/__ARDUR_SOURCE_REF__/scripts/run-no-key-mvp-demo.py), which
 verifies the session-end token with its ephemeral public key before cleanup.
 
 ## Architecture boundary

@@ -16,7 +16,7 @@ FROM ${PYTHON_IMAGE}
 
 ARG OCI_VERSION=dev
 ARG OCI_REVISION=unknown
-ARG OCI_SOURCE=https://github.com/ArdurAI/ardur
+ARG OCI_SOURCE=https://github.com/ArdurAI/ardur-evidence
 ARG UTIL_LINUX_VERSION=2.41.5-0+deb13u1
 ARG BSDUTILS_VERSION=1:2.41.5-0+deb13u1
 ARG LOGIN_VERSION=1:4.16.0-2+really2.41.5-0+deb13u1

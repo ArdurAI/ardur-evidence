@@ -2,7 +2,7 @@
 title: "Comparisons and engineering responses"
 description: "A reader doing due diligence on Ardur ends up with the same set of questions every time. This directory is where those questions get serious technical answers — not marketing compa"
 source_path: "docs/comparisons/README.md"
-source_sha256: "7c6faf78ee26526950d256f0164ca4f06de315ed1e3292dbb62e5c89d3c20bd8"
+source_sha256: "a2cc0ec84ccb797ccb41491bdd79884afa1110e5709fbf8cc5b21a21315165a0"
 weight: 100
 maturity: ["public-now"]
 claim_types: ["comparison"]
@@ -27,7 +27,7 @@ A reader doing due diligence on Ardur ends up with the same set of questions eve
 
 ## What's not here
 
-- A comparison against every adjacent governance product. We do that on request, not preemptively. If you're evaluating Ardur next to a specific tool and want a structured comparison, [open a Discussion](https://github.com/ArdurAI/ardur/discussions) and name the tool — we'll write it up.
+- A comparison against every adjacent governance product. We do that on request, not preemptively. If you're evaluating Ardur next to a specific tool and want a structured comparison, [open a Discussion](https://github.com/ArdurAI/ardur-evidence/discussions) and name the tool — we'll write it up.
 - A "why Ardur is better than X" page. The comparison docs in this directory all converge on "different problems, often complementary." If we ever post a "why Ardur is better than X" page, take that as a sign we've drifted from the protocol-research framing this project came from.
 
 ## Reading order if you're new to the docs

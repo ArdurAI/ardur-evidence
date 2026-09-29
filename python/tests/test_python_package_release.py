@@ -197,11 +197,11 @@ def test_python_distribution_metadata_is_release_ready() -> None:
         f"build-system requirements must use exact == pins: {invalid_build_requirements}"
     )
     assert project["urls"] == {
-        "Homepage": "https://github.com/ArdurAI/ardur",
-        "Documentation": "https://github.com/ArdurAI/ardur/tree/main/docs",
-        "Repository": "https://github.com/ArdurAI/ardur",
-        "Issues": "https://github.com/ArdurAI/ardur/issues",
-        "Discussions": "https://github.com/ArdurAI/ardur/discussions",
+        "Homepage": "https://github.com/ArdurAI/ardur-evidence",
+        "Documentation": "https://github.com/ArdurAI/ardur-evidence/tree/main/docs",
+        "Repository": "https://github.com/ArdurAI/ardur-evidence",
+        "Issues": "https://github.com/ArdurAI/ardur-evidence/issues",
+        "Discussions": "https://github.com/ArdurAI/ardur-evidence/discussions",
     }
 
     package_license = PYTHON_ROOT / "LICENSE"
