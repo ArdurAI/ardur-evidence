@@ -2,7 +2,7 @@
 title: "Security Policy"
 description: "This file is the public reporting policy for Ardur."
 source_path: "SECURITY.md"
-source_sha256: "d4869a975418372e438bdf8cd19325badb0796c21903b4e4a5ca39acf720c006"
+source_sha256: "da05edc6e91c1c6563864f5183bab817c15ab2dbc91d31b0cae01310c028aed8"
 weight: 100
 maturity: ["public-now"]
 claim_types: ["security-model"]
@@ -30,7 +30,7 @@ Do not open a public issue for an active vulnerability.
 
 Report security issues privately via one of:
 
-- **Preferred:** [GitHub Security Advisory](https://github.com/ArdurAI/ardur/security/advisories/new) — creates a private advisory thread that the maintainer will triage.
+- **Preferred:** [GitHub Security Advisory](https://github.com/ArdurAI/ardur-evidence/security/advisories/new) — creates a private advisory thread that the maintainer will triage.
 - **Fallback:** email `gnani.nutakki@gmail.com` if the advisory path is not available or not working for you.
 
 Both channels land in the same inbox; the advisory path is preferred because it carries better history and coordination tooling for the fix.

@@ -404,7 +404,7 @@ func TestAATRevisionLedgerMatchesImplementationContract(t *testing.T) {
 		ledger.Decision.AdditionalProfile != DGProfileV02 {
 		t.Fatalf("ledger additional profile = %q/%q", ledger.Decision.AdditionalRevision, ledger.Decision.AdditionalProfile)
 	}
-	if ledger.Decision.FollowUpIssue != "https://github.com/ArdurAI/ardur/issues/246" {
+	if ledger.Decision.FollowUpIssue != "https://github.com/ArdurAI/ardur-evidence/issues/246" {
 		t.Fatalf("ledger follow-up issue = %q", ledger.Decision.FollowUpIssue)
 	}
 	if ledger.Sources.Draft00.SHA256 != "e822cc94f6b83ba81d6530f98f54617b3a9e5c7a46463bbfbdf67cb181431f1e" ||

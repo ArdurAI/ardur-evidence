@@ -1,4 +1,4 @@
-baseURL: "https://ArdurAI.github.io/ardur/"
+baseURL: "https://ArdurAI.github.io/ardur-evidence/"
 title: "Ardur Evidence"
 locale: "en-us"
 enableRobotsTXT: true
@@ -19,7 +19,7 @@ outputs:
     - llms
 
 params:
-  repoURL: "https://github.com/ArdurAI/ardur"
+  repoURL: "https://github.com/ArdurAI/ardur-evidence"
   sourceRef: "dev"
   description: "Open-source runtime governance for AI agents — prove what your agents do, not just what they say."
 
@@ -41,7 +41,7 @@ menus:
       pageRef: "/roadmap"
       weight: 70
     - name: "GitHub"
-      url: "https://github.com/ArdurAI/ardur"
+      url: "https://github.com/ArdurAI/ardur-evidence"
       weight: 90
   footer:
     - name: "Get Started"

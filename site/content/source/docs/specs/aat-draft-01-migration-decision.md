@@ -2,7 +2,7 @@
 title: "AAT draft-01 Migration Decision"
 description: "**Reviewed 2026-07-11.** Ardur preserves the existing"
 source_path: "docs/specs/aat-draft-01-migration-decision.md"
-source_sha256: "6b6612e8f555826b144d151956e4f6798c33cccb1762afdc8d634a06cec19e7a"
+source_sha256: "cc373b0fd9f50c856b7b5608f582a29e160ab193f2af6f00e312c5666106aae9"
 weight: 100
 maturity: ["public-now"]
 claim_types: ["protocol-spec"]
@@ -24,7 +24,7 @@ This page is generated from the public repository source file. Edit the source f
 the separately identified `ardur.dg.aat-draft-01.v0.2` profile over draft-01.
 This is a versioned addition, not an in-place reinterpretation of draft-00.
 
-[Issue #246](https://github.com/ArdurAI/ardur/issues/246) owns this completed
+[Issue #246](https://github.com/ArdurAI/ardur-evidence/issues/246) owns this completed
 review and implementation. Independent draft-01 interoperability remains not
 demonstrated and must not be inferred from the Ardur-generated fixture.
 

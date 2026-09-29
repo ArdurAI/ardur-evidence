@@ -2,7 +2,7 @@
 title: "MCEP Specifications (v0.1)"
 description: "This directory carries the v0.1 specification documents for Ardur's protocol layer, MCEP (Mission-Controlled Execution Protocol). v0.1 is a pre-release series — the specs describe "
 source_path: "docs/specs/README.md"
-source_sha256: "1d5ee46b5ec5c4cc0b35ec5ae0db364332d959513931dde638dd2a4385b8dd5c"
+source_sha256: "b1caca0f49326e4b57d96ff7c0282d02200df6686d76018e82aec28278ab74e7"
 weight: 100
 maturity: ["public-now"]
 claim_types: ["protocol-spec"]
@@ -115,7 +115,7 @@ The clean-break rationale: there are no v0.1 receipts, passports, or attestation
 
 ## Relationship to adjacent standards
 
-- **AAT (Attenuating Authorization Tokens)** — individual Internet-Drafts with no formal IETF standing; MCEP preserves its draft-00 DG v0.1 wire contract and adds the explicitly discriminated draft-01 DG v0.2 profile. The 2026-07-11 review and field ledger are recorded in [issue #246](https://github.com/ArdurAI/ardur/issues/246); independent interoperability remains not demonstrated.
+- **AAT (Attenuating Authorization Tokens)** — individual Internet-Drafts with no formal IETF standing; MCEP preserves its draft-00 DG v0.1 wire contract and adds the explicitly discriminated draft-01 DG v0.2 profile. The 2026-07-11 review and field ledger are recorded in [issue #246](https://github.com/ArdurAI/ardur-evidence/issues/246); independent interoperability remains not demonstrated.
 - **DRP (Delegation Receipt Protocol)** — individual Internet-Draft with no formal IETF standing; Ardur implements its draft-10-pinned profile and publishes portable implementation self-test fixtures, while raw RFC 3161 proof integration and independent interoperability remain not demonstrated.
 - **EAT (Entity Attestation Token, RFC 9711)** — used by the ER EAT/CWT profile to carry Execution Receipts.
 - **SPIFFE** — workload identity substrate. The implemented Python S0–S2 path can obtain its service SVID and can verify a peer JWT-SVID when configured, but Mission Passport issuance does not yet resolve identity from SPIRE. Credential `spiffe_id` values remain caller-provided and self-asserted.

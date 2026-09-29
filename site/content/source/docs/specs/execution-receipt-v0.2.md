@@ -161,7 +161,7 @@ does not impose v0.2 canonical-payload checks retroactively.
 [`fixtures/execution-receipt-v0.2-action.json`](/__ardur_internal__/repo/docs/specs/fixtures/execution-receipt-v0.2-action.json)
 is the public claim-set fixture. Tests validate it against the v0.2 JSON Schema,
 canonicalize it with RFC 8785, and compare its canonical SHA-256 digest with
-[`fixtures/execution-receipt-v0.2-action.jcs.sha256`](https://github.com/ArdurAI/ardur/blob/__ARDUR_SOURCE_REF__/docs/specs/fixtures/execution-receipt-v0.2-action.jcs.sha256).
+[`fixtures/execution-receipt-v0.2-action.jcs.sha256`](https://github.com/ArdurAI/ardur-evidence/blob/__ARDUR_SOURCE_REF__/docs/specs/fixtures/execution-receipt-v0.2-action.jcs.sha256).
 
 The fixture is an unsigned claim set. ES256 signatures are intentionally not
 golden bytes because ECDSA signature generation need not produce an identical

@@ -15,7 +15,7 @@
     "live_document_observed": "draft-niyikiza-oauth-attenuating-agent-tokens-01",
     "live_url": "https://datatracker.ietf.org/doc/draft-niyikiza-oauth-attenuating-agent-tokens/",
     "formal_ietf_standing": false,
-    "migration_issue": "https://github.com/ArdurAI/ardur/issues/246",
+    "migration_issue": "https://github.com/ArdurAI/ardur-evidence/issues/246",
     "note": "The draft-00 wire remains supported. Draft-01 is dispatched only by the explicit Ardur DG v0.2 profile; mixed or unprofiled wire forms fail closed."
   },
   "source_surfaces": {

@@ -1,14 +1,14 @@
 blank_issues_enabled: false
 contact_links:
   - name: Question or "is this expected?"
-    url: https://github.com/ArdurAI/ardur/discussions/categories/q-a
+    url: https://github.com/ArdurAI/ardur-evidence/discussions/categories/q-a
     about: Use Discussions Q&A for usage questions, "how do I", and "is this expected behaviour?"
   - name: Idea or proposal
-    url: https://github.com/ArdurAI/ardur/discussions/categories/ideas
+    url: https://github.com/ArdurAI/ardur-evidence/discussions/categories/ideas
     about: Open an Idea in Discussions before filing a major feature request — saves a round trip.
   - name: Show and tell
-    url: https://github.com/ArdurAI/ardur/discussions/categories/show-and-tell
+    url: https://github.com/ArdurAI/ardur-evidence/discussions/categories/show-and-tell
     about: Share what you've built with Ardur, demos, integrations, or experience reports.
   - name: Security vulnerability
-    url: https://github.com/ArdurAI/ardur/security/advisories/new
+    url: https://github.com/ArdurAI/ardur-evidence/security/advisories/new
     about: Report security issues privately via the Security tab — do not file a public issue.

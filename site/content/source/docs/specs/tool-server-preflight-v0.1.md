@@ -149,4 +149,4 @@ verify a lockfile, registry artifact, or package digest.
 Representative fixtures live under
 [`examples/tool-server-preflight/`](/__ardur_internal__/source/examples/tool-server-preflight/readme/), and
 the executable contract is covered by
-[`python/tests/test_tool_preflight.py`](https://github.com/ArdurAI/ardur/blob/__ARDUR_SOURCE_REF__/python/tests/test_tool_preflight.py).
+[`python/tests/test_tool_preflight.py`](https://github.com/ArdurAI/ardur-evidence/blob/__ARDUR_SOURCE_REF__/python/tests/test_tool_preflight.py).

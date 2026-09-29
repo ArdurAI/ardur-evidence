@@ -1,4 +1,11 @@
-# Ardur
+# Ardur Evidence
+
+> **Renamed on 2026-09-29.** This repository was `ArdurAI/ardur`. It is being
+> refocused as **Ardur Evidence**: the signed execution-receipt format and the
+> offline verifier (`ardur-verify`). The name *Ardur* now refers to the
+> [Ardur app](https://github.com/ArdurAI/ardur-bot). Parts of this repository
+> that are not about evidence are being archived. See the
+> [Naming Note](#naming-note).
 
 Ardur governs AI-agent tool calls that pass through a configured adapter or
 proxy. It checks mission, resource, budget, and delegation constraints before
@@ -15,7 +22,7 @@ or hidden side effects; see the
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-pre--release-blue)](STATUS.md)
-[![Discussions](https://img.shields.io/badge/GitHub-Discussions-181717?logo=github)](https://github.com/ArdurAI/ardur/discussions)
+[![Discussions](https://img.shields.io/badge/GitHub-Discussions-181717?logo=github)](https://github.com/ArdurAI/ardur-evidence/discussions)
 
 This public repo contains the product intent, research-informed positioning,
 public specs, the Python governance runtime, Go packages for eBPF kernel
@@ -145,7 +152,7 @@ key; the local demo additionally avoids manual bearer-token and Docker setup.
 ### Local governance loop
 
 ```bash
-git clone https://github.com/ArdurAI/ardur.git && cd ardur
+git clone https://github.com/ArdurAI/ardur-evidence.git && cd ardur
 ./scripts/setup-dev.sh --skip-go
 source python/.venv/bin/activate
 python scripts/run-no-key-mvp-demo.py
@@ -322,11 +329,16 @@ credential identity at issuance. A `spiffe_id` supplied to Python issuance
 remains caller-provided and self-asserted even when the service has fetched its
 own SVID.
 
-If you'd use an integration that isn't listed, file an [integration request](https://github.com/ArdurAI/ardur/issues/new?template=integration_request.yml) — it's the strongest signal we have for prioritisation.
+If you'd use an integration that isn't listed, file an [integration request](https://github.com/ArdurAI/ardur-evidence/issues/new?template=integration_request.yml) — it's the strongest signal we have for prioritisation.
 
 ## Naming Note
 
-`Ardur` is the public product name.
+`Ardur Evidence` is this project's public name. It was called `Ardur`, and the
+repository was `ArdurAI/ardur`, until 2026-09-29; `Ardur` now names the Ardur
+app. Protocol identifiers keep their existing `ardur.*` names, for example the
+`ardur.execution_receipt.v0.2` schema and the `application/ardur.er+jwt` token
+type, so receipts issued before the rename stay valid. The Go module path is
+unchanged for now.
 
 Some implementation and protocol surfaces still use `VIBAP`, `MCEP`, and
 related protocol names. Those names are part of the technical lineage and are

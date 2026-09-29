@@ -98,7 +98,7 @@ The clean-break rationale: there are no v0.1 receipts, passports, or attestation
 
 ## Relationship to adjacent standards
 
-- **AAT (Attenuating Authorization Tokens)** — individual Internet-Drafts with no formal IETF standing; MCEP preserves its draft-00 DG v0.1 wire contract and adds the explicitly discriminated draft-01 DG v0.2 profile. The 2026-07-11 review and field ledger are recorded in [issue #246](https://github.com/ArdurAI/ardur/issues/246); independent interoperability remains not demonstrated.
+- **AAT (Attenuating Authorization Tokens)** — individual Internet-Drafts with no formal IETF standing; MCEP preserves its draft-00 DG v0.1 wire contract and adds the explicitly discriminated draft-01 DG v0.2 profile. The 2026-07-11 review and field ledger are recorded in [issue #246](https://github.com/ArdurAI/ardur-evidence/issues/246); independent interoperability remains not demonstrated.
 - **DRP (Delegation Receipt Protocol)** — individual Internet-Draft with no formal IETF standing; Ardur implements its draft-10-pinned profile and publishes portable implementation self-test fixtures, while raw RFC 3161 proof integration and independent interoperability remain not demonstrated.
 - **EAT (Entity Attestation Token, RFC 9711)** — used by the ER EAT/CWT profile to carry Execution Receipts.
 - **SPIFFE** — workload identity substrate. The implemented Python S0–S2 path can obtain its service SVID and can verify a peer JWT-SVID when configured, but Mission Passport issuance does not yet resolve identity from SPIRE. Credential `spiffe_id` values remain caller-provided and self-asserted.

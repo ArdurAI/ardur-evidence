@@ -41,7 +41,7 @@ rather than trivially agreeing.
 
 ```sh
 # 1. Clone (or pull) the repository
-git clone https://github.com/ArdurAI/ardur.git
+git clone https://github.com/ArdurAI/ardur-evidence.git
 cd ardur
 
 # 2. Run the benchmark

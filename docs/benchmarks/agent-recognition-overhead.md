@@ -147,14 +147,14 @@ reference `7a2167f5`; all three were retained on their first attempt.
 
 | Run | Reviewed report | CPU model | Schema/result | Artifact digest |
 |---:|---|---|---|---|
-| [29580498313](https://github.com/ArdurAI/ardur/actions/runs/29580498313) | [raw JSON](../../go/pkg/kernelcapture/testdata/agent-recognition-benchmark-evidence-9c5f16b-run29580498313.json) | AMD EPYC 7763 | v0.3 evidence only | `a656f3ff388e67251bfc3848632cc03714fb455fe5ab5a4cb4a9d60a9cf57ba4` |
-| [29580918057](https://github.com/ArdurAI/ardur/actions/runs/29580918057) | [raw JSON](../../go/pkg/kernelcapture/testdata/agent-recognition-benchmark-evidence-9c5f16b-run29580918057.json) | AMD EPYC 9V74 | v0.3 evidence only | `b3682ba292fa1288300c429ed1c39599acfc125afc9227f855bf82107f97be7e` |
-| [29581341003](https://github.com/ArdurAI/ardur/actions/runs/29581341003) | [raw JSON](../../go/pkg/kernelcapture/testdata/agent-recognition-benchmark-evidence-9c5f16b-run29581341003.json) | AMD EPYC 7763 | v0.3 evidence only | `32f3cc0c7f5811f4f72297310c1cbd11580130e1773b67e21f9da769c2fa2317` |
-| [29628939552](https://github.com/ArdurAI/ardur/actions/runs/29628939552) | [raw JSON](../../go/pkg/kernelcapture/testdata/agent-recognition-benchmark-evidence-604f618-run29628939552.json) | Intel Xeon Platinum 8573C | v0.3 pass | `fb338e1fa2bc0b2657a603d1d424f3a71691efa22a58aa0f0f288dbe0649a176` |
-| [29629137197](https://github.com/ArdurAI/ardur/actions/runs/29629137197) | [raw JSON](../../go/pkg/kernelcapture/testdata/agent-recognition-benchmark-evidence-86e4807-run29629137197.json) | Intel Xeon 6973P-C | v0.3 fail: storm p95 only | `1f8c8d764ec87dd4094e7d249f4c78849116688218013ebf348698eb220d8284` |
-| [29699641719](https://github.com/ArdurAI/ardur/actions/runs/29699641719) | [raw JSON](../../go/pkg/kernelcapture/testdata/agent-recognition-benchmark-evidence-3bd8d0d-run29699641719.json) | AMD EPYC 7763 | v0.4 evidence only | `0e418115253b098345aee755ad916bd6a67df2ab0972e74081967a26abc076d0` |
-| [29699878928](https://github.com/ArdurAI/ardur/actions/runs/29699878928) | [raw JSON](../../go/pkg/kernelcapture/testdata/agent-recognition-benchmark-evidence-3bd8d0d-run29699878928.json) | AMD EPYC 9V74 | v0.4 evidence only | `ae744812e4a1e13f119dbabf9ce4bd095721af9e8de540bbfab4d3a7ae6d89f5` |
-| [29700082923](https://github.com/ArdurAI/ardur/actions/runs/29700082923) | [raw JSON](../../go/pkg/kernelcapture/testdata/agent-recognition-benchmark-evidence-3bd8d0d-run29700082923.json) | Intel Xeon Platinum 8573C | v0.4 evidence only | `b1e810482693b77a09cb8a049edc4f65c1f8a8cf12484848136f7a1508521c9b` |
+| [29580498313](https://github.com/ArdurAI/ardur-evidence/actions/runs/29580498313) | [raw JSON](../../go/pkg/kernelcapture/testdata/agent-recognition-benchmark-evidence-9c5f16b-run29580498313.json) | AMD EPYC 7763 | v0.3 evidence only | `a656f3ff388e67251bfc3848632cc03714fb455fe5ab5a4cb4a9d60a9cf57ba4` |
+| [29580918057](https://github.com/ArdurAI/ardur-evidence/actions/runs/29580918057) | [raw JSON](../../go/pkg/kernelcapture/testdata/agent-recognition-benchmark-evidence-9c5f16b-run29580918057.json) | AMD EPYC 9V74 | v0.3 evidence only | `b3682ba292fa1288300c429ed1c39599acfc125afc9227f855bf82107f97be7e` |
+| [29581341003](https://github.com/ArdurAI/ardur-evidence/actions/runs/29581341003) | [raw JSON](../../go/pkg/kernelcapture/testdata/agent-recognition-benchmark-evidence-9c5f16b-run29581341003.json) | AMD EPYC 7763 | v0.3 evidence only | `32f3cc0c7f5811f4f72297310c1cbd11580130e1773b67e21f9da769c2fa2317` |
+| [29628939552](https://github.com/ArdurAI/ardur-evidence/actions/runs/29628939552) | [raw JSON](../../go/pkg/kernelcapture/testdata/agent-recognition-benchmark-evidence-604f618-run29628939552.json) | Intel Xeon Platinum 8573C | v0.3 pass | `fb338e1fa2bc0b2657a603d1d424f3a71691efa22a58aa0f0f288dbe0649a176` |
+| [29629137197](https://github.com/ArdurAI/ardur-evidence/actions/runs/29629137197) | [raw JSON](../../go/pkg/kernelcapture/testdata/agent-recognition-benchmark-evidence-86e4807-run29629137197.json) | Intel Xeon 6973P-C | v0.3 fail: storm p95 only | `1f8c8d764ec87dd4094e7d249f4c78849116688218013ebf348698eb220d8284` |
+| [29699641719](https://github.com/ArdurAI/ardur-evidence/actions/runs/29699641719) | [raw JSON](../../go/pkg/kernelcapture/testdata/agent-recognition-benchmark-evidence-3bd8d0d-run29699641719.json) | AMD EPYC 7763 | v0.4 evidence only | `0e418115253b098345aee755ad916bd6a67df2ab0972e74081967a26abc076d0` |
+| [29699878928](https://github.com/ArdurAI/ardur-evidence/actions/runs/29699878928) | [raw JSON](../../go/pkg/kernelcapture/testdata/agent-recognition-benchmark-evidence-3bd8d0d-run29699878928.json) | AMD EPYC 9V74 | v0.4 evidence only | `ae744812e4a1e13f119dbabf9ce4bd095721af9e8de540bbfab4d3a7ae6d89f5` |
+| [29700082923](https://github.com/ArdurAI/ardur-evidence/actions/runs/29700082923) | [raw JSON](../../go/pkg/kernelcapture/testdata/agent-recognition-benchmark-evidence-3bd8d0d-run29700082923.json) | Intel Xeon Platinum 8573C | v0.4 evidence only | `b1e810482693b77a09cb8a049edc4f65c1f8a8cf12484848136f7a1508521c9b` |
 
 Every report strictly reloads and recomputes. Together they delivered,
 recognized, and fingerprinted 16,640 candidate events and 16,640 reference
@@ -204,9 +204,9 @@ on the same VM for each report.
 
 | Run | Reviewed report | CPU model | Calibration p50 | Artifact digest |
 |---:|---|---|---:|---|
-| [29580498313](https://github.com/ArdurAI/ardur/actions/runs/29580498313) | [raw JSON](../../go/pkg/kernelcapture/testdata/agent-recognition-benchmark-evidence-9c5f16b-run29580498313.json) | AMD EPYC 7763 | 170.023 ms | `a656f3ff388e67251bfc3848632cc03714fb455fe5ab5a4cb4a9d60a9cf57ba4` |
-| [29580918057](https://github.com/ArdurAI/ardur/actions/runs/29580918057) | [raw JSON](../../go/pkg/kernelcapture/testdata/agent-recognition-benchmark-evidence-9c5f16b-run29580918057.json) | AMD EPYC 9V74 | 191.558 ms | `b3682ba292fa1288300c429ed1c39599acfc125afc9227f855bf82107f97be7e` |
-| [29581341003](https://github.com/ArdurAI/ardur/actions/runs/29581341003) | [raw JSON](../../go/pkg/kernelcapture/testdata/agent-recognition-benchmark-evidence-9c5f16b-run29581341003.json) | AMD EPYC 7763 | 169.963 ms | `32f3cc0c7f5811f4f72297310c1cbd11580130e1773b67e21f9da769c2fa2317` |
+| [29580498313](https://github.com/ArdurAI/ardur-evidence/actions/runs/29580498313) | [raw JSON](../../go/pkg/kernelcapture/testdata/agent-recognition-benchmark-evidence-9c5f16b-run29580498313.json) | AMD EPYC 7763 | 170.023 ms | `a656f3ff388e67251bfc3848632cc03714fb455fe5ab5a4cb4a9d60a9cf57ba4` |
+| [29580918057](https://github.com/ArdurAI/ardur-evidence/actions/runs/29580918057) | [raw JSON](../../go/pkg/kernelcapture/testdata/agent-recognition-benchmark-evidence-9c5f16b-run29580918057.json) | AMD EPYC 9V74 | 191.558 ms | `b3682ba292fa1288300c429ed1c39599acfc125afc9227f855bf82107f97be7e` |
+| [29581341003](https://github.com/ArdurAI/ardur-evidence/actions/runs/29581341003) | [raw JSON](../../go/pkg/kernelcapture/testdata/agent-recognition-benchmark-evidence-9c5f16b-run29581341003.json) | AMD EPYC 7763 | 169.963 ms | `32f3cc0c7f5811f4f72297310c1cbd11580130e1773b67e21f9da769c2fa2317` |
 
 Each report delivered, recognized, and fingerprinted all 2,080 candidate and
 all 2,080 reference events. Across the evidence set that is 6,240 exact
@@ -237,7 +237,7 @@ tolerance widening.
 ### Retired v0.2 synthetic-calibration evidence
 
 [GitHub Actions run
-29575721818](https://github.com/ArdurAI/ardur/actions/runs/29575721818)
+29575721818](https://github.com/ArdurAI/ardur-evidence/actions/runs/29575721818)
 executed source `a0bdcd981107631a45476ac27f84ed17da2d221d` three times on
 fresh `ubuntu-24.04` hosted VMs. Attempts 1 and 3 used an AMD EPYC 9V74 and
 attempt 2 used an Intel Xeon Platinum 8573C. All three recorded runner image
@@ -277,7 +277,7 @@ claim, or permission to ignore a new runner class; unexpected failures require
 artifact review, never retry voting.
 
 The first mandatory-budget run, [GitHub Actions run
-29577544792](https://github.com/ArdurAI/ardur/actions/runs/29577544792),
+29577544792](https://github.com/ArdurAI/ardur-evidence/actions/runs/29577544792),
 falsified that normalization on its first attempt; it was not rerun. On an AMD
 EPYC 7763, all 2,080 candidate events were delivered, recognized, and
 fingerprinted and all wall-p50/RSS checks passed, but normalized CPU failed for
@@ -292,7 +292,7 @@ is committed so the methodology falsification remains reproducible.
 ### Historical v0.1 CI evidence
 
 The initial exact-head x86 evidence is [GitHub Actions run
-29321373911](https://github.com/ArdurAI/ardur/actions/runs/29321373911) for
+29321373911](https://github.com/ArdurAI/ardur-evidence/actions/runs/29321373911) for
 source `967ba6702c721a351c9e52e665f16e591ac5d9b6`. The committed
 [raw report](../../go/pkg/kernelcapture/testdata/agent-recognition-benchmark-baseline-967ba670.json)
 has artifact digest
@@ -315,7 +315,7 @@ profiles later in an arm could inherit an earlier profile's high-water mark.
 Commit `203c1016dbec3740608e8f1a9a5ce71e90f5de78` resets that watermark before
 each profile and hardens report publication. The corrected-method evidence is
 [GitHub Actions run
-29326060724](https://github.com/ArdurAI/ardur/actions/runs/29326060724). Its
+29326060724](https://github.com/ArdurAI/ardur-evidence/actions/runs/29326060724). Its
 [raw report](../../go/pkg/kernelcapture/testdata/agent-recognition-benchmark-evidence-203c101.json)
 has artifact digest
 `cd0a5e68b45757886e67d6f546de9e2be4bbf0f48f7fdaa1b9a0acbd279c9d23`,
