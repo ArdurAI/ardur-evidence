@@ -93,6 +93,7 @@
         "error_count",
         "unknown_count",
         "anchored_count",
+        "public_log_protocol_anchored_count",
         "receiver_attested_count",
         "authority_narrowing_steps"
       ],
@@ -110,7 +111,16 @@
           "minimum": 0,
           "description": "Count of timeline entries whose decision is UNKNOWN. Required: a reader must not have to infer the absence of unknown-verdict receipts from a missing field."
         },
-        "anchored_count": {"type": "integer", "minimum": 0},
+        "anchored_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Count of timeline entries with a valid anchor of any class, including the operator-administered self-hosted log. Never read this as external anchoring."
+        },
+        "public_log_protocol_anchored_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Count of timeline entries whose valid anchor's anchor_class is public-log-protocol. Necessary but not sufficient for an external-anchoring gate: the backend kind it derives from is presenter-supplied, and the log may be operator-run. A gate must additionally confirm out of band that the pinned transparency-log key belongs to a log administered outside the operator's authority."
+        },
         "receiver_attested_count": {"type": "integer", "minimum": 0},
         "authority_narrowing_steps": {
           "type": "array",
@@ -360,6 +370,14 @@
           "properties": {
             "present": {"type": "boolean"},
             "valid": {"type": "boolean"},
+            "backend": {
+              "enum": ["c2sp-local-v1", "rekor-v1"],
+              "description": "The backend kind the anchor bundle declared, copied verbatim after the bundle verified. This value is supplied by the presenter and selects a verification branch; it is not itself signed as a statement about where the log runs. Deliberately a closed enum: a new backend must be added here, and classified under anchor_class, before the verifier can report it."
+            },
+            "anchor_class": {
+              "enum": ["self-hosted-log", "public-log-protocol"],
+              "description": "Mechanism class derived from the backend kind. The two are not symmetric. `self-hosted-log` (c2sp-local-v1) is a checked property: that backend writes a local log, so the anchor is operator-administered by construction and must never satisfy an externally-anchored gate. `public-log-protocol` (rekor-v1) means only that the public-log submission protocol was used and its evidence verified under the pinned transparency-log key; it does not establish where the log ran, because the Rekor URL accepts any HTTPS host including one inside the operator's deployment, and unlike the self-hosted branch the checkpoint origin is not pinned. Externality and independence must both be confirmed out of band by comparing trust_roots[transparency-log].spki_fingerprint and the entry's log_id against an independently trusted inventory."
+            },
             "anchor_id": {"$ref": "#/$defs/nullableBoundedString"},
             "log_id": {"$ref": "#/$defs/nullableBoundedString"},
             "log_index": {
@@ -369,7 +387,9 @@
               "anyOf": [{"type": "integer", "minimum": 0}, {"type": "null"}]
             }
           },
-          "description": "Chain-only reports emit present/valid alone; the anchor detail keys appear only on the full-evidence path."
+          "if": {"properties": {"valid": {"const": true}}, "required": ["valid"]},
+          "then": {"required": ["backend", "anchor_class"]},
+          "description": "Chain-only reports emit present/valid alone; the anchor detail keys appear only on the full-evidence path. A valid anchor MUST carry backend and anchor_class, so the contract — not just the implementation — forbids an unlabeled anchor that a reader could mistake for external anchoring."
         },
         "receiver": {
           "type": "object",

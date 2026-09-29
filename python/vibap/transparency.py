@@ -43,6 +43,10 @@ LOCAL_ENTRY_SCHEMA_VERSION = "ardur.transparency_log_entry.v0.1"
 BACKEND_UNCONFIGURED = "unconfigured"
 BACKEND_LOCAL_SIGNED = "c2sp-local-v1"
 BACKEND_REKOR_V1 = "rekor-v1"
+# Backend kinds an *anchored* bundle may declare. Narrower than the pending
+# set, which also admits BACKEND_UNCONFIGURED. Anything that classifies a
+# verified anchor must stay in step with this set.
+ANCHORED_BACKEND_KINDS = frozenset({BACKEND_LOCAL_SIGNED, BACKEND_REKOR_V1})
 DEFAULT_MAX_REGISTRATION_DELAY_S = 86_400
 DEFAULT_NETWORK_TIMEOUT_S = 10.0
 MAX_BUNDLE_BYTES = 2 * 1024 * 1024
@@ -1034,7 +1038,7 @@ def verify_anchor_bundle(
     if not isinstance(backend, dict) or not isinstance(evidence, dict):
         raise AnchorVerificationError("anchor backend/evidence is malformed")
     backend_kind = backend.get("kind")
-    if backend_kind not in {BACKEND_LOCAL_SIGNED, BACKEND_REKOR_V1}:
+    if backend_kind not in ANCHORED_BACKEND_KINDS:
         raise AnchorVerificationError(f"unsupported anchored backend {backend_kind!r}")
     body = _decode_base64(evidence.get("body"), "anchor body")
     integrated_time = evidence.get("integrated_time")
