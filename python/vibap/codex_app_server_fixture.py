@@ -25,7 +25,7 @@ from typing import Any, Iterable, Mapping, Sequence
 
 from .claude_code_hook import MissionLoadError, load_active_passport
 from .denial import DenialReason
-from .passport import DEFAULT_HOME, _ensure_default_home_dir, load_private_key, load_public_key, resolve_keys_dir
+from .passport import DEFAULT_HOME, _ensure_default_home_dir, load_report_public_key, load_private_key, resolve_keys_dir
 from .receipt import build_receipt, sign_receipt, verify_chain
 from .shareable_redaction import path_aliases, redact_local_paths
 
@@ -1272,7 +1272,6 @@ def build_shareable_report(
     ardur_home = Path(home or os.environ.get("VIBAP_HOME", str(DEFAULT_HOME))).expanduser().resolve(strict=False)
     chains = Path(chain_dir or os.environ.get(CHAIN_DIR_ENV_VAR, str(DEFAULT_CHAIN_DIR))).expanduser().resolve(strict=False)
     signing_keys = resolve_keys_dir(keys_dir)
-    public_key = load_public_key(signing_keys)
     roots: dict[str, str | Path | None] = {
         "CODEX_HOME": ardur_home,
         "ARDUR_CODEX_CHAIN": chains,
@@ -1282,6 +1281,9 @@ def build_shareable_report(
         roots.update(dict(redaction_roots))
 
     chain_files = _iter_chain_files(chains)
+    public_key = load_report_public_key(
+        signing_keys, evidence_present=bool(chain_files)
+    )
     receipt_claims: list[dict[str, Any]] = []
     verification: list[dict[str, Any]] = []
     invalid_chains: list[dict[str, Any]] = []
