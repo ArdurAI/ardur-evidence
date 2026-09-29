@@ -3273,10 +3273,20 @@ def cmd_anchor(args: argparse.Namespace) -> int:
                 raise TransparencyError(
                     "local anchoring requires --local-log, --log-private-key, and --origin"
                 )
+            # --keys-dir is optional here: local anchoring works with no
+            # receipt key at all. When the operator does supply one, use it,
+            # so a receipt signed by a different issuer is refused before the
+            # irreversible log write rather than at verification time.
+            local_receipt_public_key = (
+                load_existing_public_key(keys_dir=args.keys_dir)
+                if args.keys_dir is not None
+                else None
+            )
             backend = LocalSignedLogBackend(
                 args.local_log,
                 _load_local_log_private_key(args.log_private_key),
                 origin=args.origin,
+                receipt_public_key=local_receipt_public_key,
             )
         else:
             if args.keys_dir is None:

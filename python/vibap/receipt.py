@@ -946,6 +946,53 @@ def _validate_canonical_payload(jwt_str: str, claims: dict[str, Any]) -> None:
         _schema_violation("JWS payload is not RFC 8785 canonical JSON")
 
 
+def assert_receipt_shaped(jwt_str: str) -> dict[str, Any]:
+    """Structurally validate a receipt JWS without checking its signature.
+
+    This exists for one job: refusing to commit a non-receipt to an
+    append-only log. A transparency-log write is irreversible, so a backend
+    that cannot check a signature (it holds no key) still must not anchor an
+    arbitrary string.
+
+    What this checks, using the same helpers ``verify_receipt`` uses so the
+    two cannot drift: the token decodes as a JWS with the receipt ``typ``,
+    every required claim is present, the payload is canonical, and the claim
+    schema validates.
+
+    What this does NOT check, and callers must not pretend otherwise: the
+    signature, the issuer, expiry, or ``iat`` skew. A structurally valid
+    receipt signed by the wrong key passes here. ``verify_receipt`` remains
+    the only authority on whether a receipt is genuine; prefer it whenever a
+    public key is available.
+    """
+
+    try:
+        header = jwt.get_unverified_header(jwt_str)
+    except jwt.PyJWTError as exc:
+        raise jwt.InvalidTokenError(
+            f"receipt is not a decodable JWS: {type(exc).__name__}"
+        ) from exc
+    if header.get("typ") != RECEIPT_JWT_TYPE:
+        raise jwt.InvalidTokenError(f"receipt typ header must be {RECEIPT_JWT_TYPE!r}")
+    if header.get("alg") != ALGORITHM:
+        raise jwt.InvalidTokenError(f"receipt alg header must be {ALGORITHM!r}")
+    claims = jwt.decode(
+        jwt_str,
+        options={
+            "verify_signature": False,
+            "verify_aud": False,
+            "verify_exp": False,
+            "verify_iat": False,
+        },
+    )
+    missing = [claim for claim in _REQUIRED_CLAIMS if claim not in claims]
+    if missing:
+        raise jwt.MissingRequiredClaimError(missing[0])
+    _validate_canonical_payload(jwt_str, claims)
+    _validate_receipt_claim_schema(claims)
+    return claims
+
+
 def verify_receipt(
     jwt_str: str,
     public_key: ec.EllipticCurvePublicKey,

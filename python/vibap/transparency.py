@@ -30,7 +30,7 @@ from jsonschema import Draft202012Validator, ValidationError
 
 from ._specs import transparency_anchor_v01_schema
 from .canonical_json import canonical_json_bytes
-from .receipt import RECEIPT_JWT_TYPE, verify_receipt
+from .receipt import RECEIPT_JWT_TYPE, assert_receipt_shaped, verify_receipt
 
 try:
     import fcntl
@@ -541,11 +541,16 @@ class LocalSignedLogBackend:
         *,
         origin: str,
         clock: Callable[[], float] = time.time,
+        receipt_public_key: ec.EllipticCurvePublicKey | None = None,
     ) -> None:
         self.log_path = Path(log_path).expanduser()
         self.private_key = private_key
         self.origin = origin
         self.clock = clock
+        # Optional because this backend is usable with no receipt key at all.
+        # When supplied, submissions are checked against it, which is strictly
+        # stronger than the structural gate every submission gets.
+        self.receipt_public_key = receipt_public_key
 
     def _read_entries_locked(self) -> list[bytes]:
         if not self.log_path.exists():
@@ -579,6 +584,35 @@ class LocalSignedLogBackend:
                 entries.append(body)
         return entries
 
+    def _assert_submittable(self, receipt_jwt: str) -> None:
+        """Refuse to commit anything that is not a receipt.
+
+        A Merkle-tree leaf cannot be withdrawn, so submission is the last
+        point at which refusal is free. The Rekor backend already refuses an
+        unverifiable receipt before its transport call; the two backends must
+        not disagree about what is anchorable just because this one holds no
+        key by default.
+
+        Without a receipt public key this is a structural gate only: it stops
+        a non-receipt, not a receipt signed by the wrong key. Pass
+        ``receipt_public_key`` to get the full check.
+        """
+
+        try:
+            assert_receipt_shaped(receipt_jwt)
+            if self.receipt_public_key is not None:
+                verify_receipt(
+                    receipt_jwt,
+                    self.receipt_public_key,
+                    verify_expiry=False,
+                    iat_future_skew_s=None,  # type: ignore[arg-type]
+                    iat_past_skew_s=None,  # type: ignore[arg-type]
+                )
+        except jwt.PyJWTError as exc:
+            raise TransparencyError(
+                f"refusing to anchor an invalid receipt: {type(exc).__name__}"
+            ) from exc
+
     def submit(
         self,
         pending_bundle: Mapping[str, Any],
@@ -587,6 +621,7 @@ class LocalSignedLogBackend:
     ) -> dict[str, Any]:
         del receipt_private_key
         digest = _validate_pending_bundle(pending_bundle)
+        self._assert_submittable(str(pending_bundle.get("receipt_jwt", "")))
         if fcntl is None:
             raise TransparencyError(
                 "local signed log backend requires POSIX file locking"
@@ -692,9 +727,7 @@ def _classify_rekor_transport_error(
             )
         return TransparencyError("Rekor submission failed: network error")
     if isinstance(reason, str) and reason.strip():
-        return TransparencyError(
-            f"Rekor submission failed: {reason.strip()}"
-        )
+        return TransparencyError(f"Rekor submission failed: {reason.strip()}")
     return TransparencyError("Rekor submission failed: network error")
 
 

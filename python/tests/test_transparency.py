@@ -5,6 +5,7 @@ import copy
 import json
 import os
 import sys
+import tempfile
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -18,7 +19,7 @@ from jsonschema import Draft202012Validator
 from vibap.canonical_json import canonical_json_bytes
 from vibap.cli import main as cli_main
 from vibap.proxy import Decision, PolicyEvent
-from vibap.receipt import build_receipt, sign_receipt
+from vibap.receipt import assert_receipt_shaped, build_receipt, sign_receipt
 from vibap.transparency import (
     BACKEND_LOCAL_SIGNED,
     BACKEND_REKOR_V1,
@@ -659,4 +660,103 @@ def test_published_golden_anchor_schema_tamper_and_freshness_contract() -> None:
             control_character,
             receipt_public_key=receipt_public_key,
             log_public_key=log_public_key,
+        )
+
+
+def test_local_backend_refuses_to_anchor_a_non_receipt() -> None:
+    """A Merkle leaf cannot be withdrawn, so a non-receipt must never reach one.
+
+    Before this gate the local backend committed any string in ``receipt_jwt``
+    to the tree and reported ``anchored``; the resulting bundle was then
+    rejected by ``verify_anchor_bundle`` -- dead on arrival, but only after
+    the irreversible write. The Rekor backend already refused this
+    (test_rekor_refuses_invalid_receipt_before_transport); the two backends
+    must not disagree about what is anchorable.
+    """
+
+    with tempfile.TemporaryDirectory() as tmp:
+        backend = LocalSignedLogBackend(
+            Path(tmp) / "log.jsonl",
+            ed25519.Ed25519PrivateKey.generate(),
+            origin="fixture.local/log",
+        )
+        with pytest.raises(TransparencyError) as caught:
+            backend.submit(
+                pending_anchor_bundle("aaa.bbb.ccc", backend_kind=BACKEND_LOCAL_SIGNED)
+            )
+        assert "refusing to anchor an invalid receipt" in str(caught.value)
+        assert not (Path(tmp) / "log.jsonl").exists(), (
+            "nothing may be written to the log when submission is refused"
+        )
+
+
+def test_local_backend_still_anchors_a_genuine_receipt_without_any_key() -> None:
+    """The structural gate must not break the keyless local-anchoring path."""
+
+    token, _ = _signed_receipt()
+    with tempfile.TemporaryDirectory() as tmp:
+        backend = LocalSignedLogBackend(
+            Path(tmp) / "log.jsonl",
+            ed25519.Ed25519PrivateKey.generate(),
+            origin="fixture.local/log",
+        )
+        anchored = backend.submit(
+            pending_anchor_bundle(token, backend_kind=BACKEND_LOCAL_SIGNED)
+        )
+        assert anchored["status"] == "anchored"
+
+
+def test_local_backend_refuses_a_receipt_signed_by_another_key_when_given_one() -> None:
+    """With a receipt public key the gate upgrades from structural to genuine.
+
+    Without a key the backend can only tell that a receipt is well formed. An
+    operator who supplies one gets the same guarantee the Rekor path has: a
+    receipt from a different issuer is refused before the write.
+    """
+
+    token, _ = _signed_receipt()
+    stranger = ec.generate_private_key(ec.SECP256R1())
+    with tempfile.TemporaryDirectory() as tmp:
+        backend = LocalSignedLogBackend(
+            Path(tmp) / "log.jsonl",
+            ed25519.Ed25519PrivateKey.generate(),
+            origin="fixture.local/log",
+            receipt_public_key=stranger.public_key(),
+        )
+        with pytest.raises(TransparencyError) as caught:
+            backend.submit(
+                pending_anchor_bundle(token, backend_kind=BACKEND_LOCAL_SIGNED)
+            )
+        assert "InvalidSignature" in str(caught.value)
+
+
+def test_assert_receipt_shaped_does_not_claim_to_check_signatures() -> None:
+    """Pin the honest boundary of the structural gate.
+
+    ``assert_receipt_shaped`` accepts a well-formed receipt regardless of who
+    signed it. That is by design -- it exists for backends holding no key --
+    and the limit must stay visible, because treating it as verification
+    would be the overclaim it was written to avoid.
+    """
+
+    token, _ = _signed_receipt()
+    claims = assert_receipt_shaped(token)
+    assert claims["receipt_id"]
+
+    for junk in ("", "aaa.bbb.ccc", "not-a-jws"):
+        with pytest.raises(jwt.PyJWTError):
+            assert_receipt_shaped(junk)
+
+    # A corrupted signature is NOT caught here, on purpose: this gate runs
+    # where no key is available. Pin it so nobody later mistakes the gate for
+    # verification.
+    header, payload, signature = token.split(".")
+    flipped = ("A" if signature[0] != "A" else "B") + signature[1:]
+    assert assert_receipt_shaped(".".join((header, payload, flipped)))
+
+    # A corrupted payload IS caught, because the canonical-payload check
+    # recomputes the encoding rather than trusting it.
+    with pytest.raises(jwt.PyJWTError):
+        assert_receipt_shaped(
+            ".".join((header, payload[:-4] + "AAAA", signature))
         )
