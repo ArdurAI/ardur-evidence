@@ -15,7 +15,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Mapping
 
-from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 from jsonschema import Draft202012Validator, ValidationError
 
@@ -23,6 +22,8 @@ from ._specs import (
     offline_verification_bundle_v01_schema,
     offline_verification_report_v01_schema,
 )
+from .key_fingerprint import KeyFingerprintError
+from .key_fingerprint import public_key_fingerprint as _public_key_fingerprint
 from .receipt import ReceiptChainError, verify_chain
 from .receiver_attestation import (
     ASSURANCE_RECEIVER_ATTESTED,
@@ -244,18 +245,20 @@ def load_offline_input(path: str | Path) -> OfflineInput:
 
 
 def public_key_fingerprint(public_key: Any) -> str:
-    """Return a stable SHA-256 SPKI fingerprint for an out-of-band trust root."""
+    """Return a stable SHA-256 SPKI fingerprint for an out-of-band trust root.
+
+    The derivation itself lives in :mod:`vibap.key_fingerprint` so that the
+    receipt ``kid`` header and these report fingerprints are the same value by
+    construction rather than by coincidence. This wrapper only re-raises in the
+    offline verifier's own error taxonomy.
+    """
 
     try:
-        spki = public_key.public_bytes(
-            serialization.Encoding.DER,
-            serialization.PublicFormat.SubjectPublicKeyInfo,
-        )
-    except (AttributeError, TypeError, ValueError) as exc:
+        return _public_key_fingerprint(public_key)
+    except KeyFingerprintError as exc:
         raise OfflineVerificationError(
             "trust_root_invalid", "trust root cannot be encoded as SPKI"
         ) from exc
-    return f"sha256:{hashlib.sha256(spki).hexdigest()}"
 
 
 def redact_text(value: str) -> str:

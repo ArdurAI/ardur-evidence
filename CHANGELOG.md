@@ -5,6 +5,21 @@ All notable changes to Ardur will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Execution Receipts now carry a `kid` in the JWS protected header, closing a
+  gap where the implementation did not meet its own published spec
+  (`docs/specs/execution-receipt-v0.1.md` §9.1 has always said the header
+  SHOULD include one). The value is content-addressed — the `sha256:<hex>`
+  SPKI fingerprint of the signing key — so a verifier recomputes it from the
+  public key it already holds, with no registry lookup and no network access.
+  It reuses the same derivation that produces `spki_fingerprint` in offline
+  verification reports, now shared via `vibap.key_fingerprint`.
+  `verify_receipt` compares the header against the verifying key **only when
+  `kid` is present**: receipts issued before this change carry none and verify
+  exactly as they did before, with no format migration. A present-but-mismatched
+  `kid` fails closed with `receipt_kid_mismatch`. The claim set is untouched —
+  `kid` is header-only, so the v0.2 payload schema and its pinned JCS digest
+  are unchanged. Scope is receipts only; passports and attestations are
+  unchanged.
 - `--output` flag added to `doctor`, `status`, `setup`, `doctor-claude-code`,
   and `protect claude-code` for atomically writing the JSON response to an
   owner-only file. Every other JSON-producing command (`verify`, `posture`,

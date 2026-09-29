@@ -222,6 +222,36 @@ The primary ER wire format is a JWS-signed JWT carrying the ER claims set.
   `application/ardur.er+jwt`.
 - The protected header SHOULD include a `kid`.
 
+#### 9.1.1 `kid` Derivation
+
+This clause makes the `kid` above checkable. It was previously left entirely to
+the producer, which meant a receiver had no way to tell a correct `kid` from an
+arbitrary label.
+
+- When a producer emits `kid`, it SHOULD be **content-addressed**: the
+  lowercase hex SHA-256 digest of the signing key's DER-encoded
+  SubjectPublicKeyInfo (SPKI), prefixed with `sha256:` — that is,
+  `sha256:<64 hex chars>`.
+- A content-addressed `kid` is derivable by any holder of the public key, so a
+  receiver verifies it by recomputation and never needs a registry lookup, a
+  network fetch, or issuer-supplied metadata. This is what keeps the check
+  available to a fully offline verifier.
+- Producers that must interoperate with an external key-management system MAY
+  emit a deployment-specific `kid` instead. Such a `kid` is an opaque label: it
+  is not recomputable, and a receiver applying the recomputation rule in §9.3
+  will reject it. Deployments choosing this path MUST publish the resolution
+  mechanism their receivers are expected to use.
+- The digest is taken over SPKI rather than over a raw public point so that the
+  identifier commits to the algorithm and curve, not only to the coordinates.
+  Producers MUST use the DER encoding with a `namedCurve` algorithm parameter;
+  an SPKI carrying explicit curve parameters encodes the same key to different
+  bytes and therefore yields a different, non-interoperable `kid`.
+
+Ardur's reference implementation (`vibap.receipt.sign_receipt`) always emits
+this content-addressed form, and derives it through the same helper that
+produces the `spki_fingerprint` values in offline verification reports, so the
+two are comparable by eye.
+
 ### 9.2 Payload Requirements
 
 - The JWT payload MUST validate against
@@ -237,6 +267,28 @@ The primary ER wire format is a JWS-signed JWT carrying the ER claims set.
 - The JWT MUST be integrity protected before it is relied upon.
 - Receivers MUST verify the signature before trusting `verdict`,
   `evidence_level`, or any privacy-sensitive optional claims.
+
+#### 9.3.1 `kid` and the Verifying Key
+
+- A receiver MUST NOT treat an **absent** `kid` as a failure. `kid` is a
+  SHOULD in §9.1, so its absence is silence, not a contradicted claim, and ERs
+  issued before a producer adopted `kid` remain valid.
+- A receiver MUST NOT use `kid` to *select* trust. `kid` names a key; it does
+  not authorize one. The verifying key comes from the receiver's own trust
+  configuration, exactly as it does when `kid` is absent.
+- When `kid` is **present**, a receiver that has recomputed the content-addressed
+  value for its verifying key MUST reject the ER if the two differ. A header
+  asserting a different key than the one that verified the signature is a
+  contradiction the receiver cannot resolve, and per the fail-closed rule it
+  denies rather than warns.
+- This is defence in depth, not the primary integrity control. The protected
+  header is inside the JWS signing input, so an attacker who rewrites `kid`
+  invalidates the signature and is rejected before this check is reached. The
+  check covers what the signature cannot: a producer that signs with one key
+  while naming another.
+
+The `kid` binding says nothing about key *validity*. Revocation and trust-root
+freshness remain out of scope for the ER itself.
 
 ### 9.4 Replay and Accountability Requirements
 

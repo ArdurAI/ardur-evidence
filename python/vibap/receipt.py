@@ -29,6 +29,9 @@ from .canonical_json import (
     canonical_json_text,
 )
 
+from .key_fingerprint import KeyFingerprintError
+from .key_fingerprint import public_key_fingerprint as _public_key_fingerprint
+
 from .passport import (
     ALGORITHM,
     DEFAULT_IAT_FUTURE_SKEW_S,
@@ -825,16 +828,108 @@ def build_receipt(
     )
 
 
+class ReceiptKeyIdMismatchError(jwt.InvalidTokenError):
+    """The receipt's protected-header ``kid`` names a key other than the
+    verifying key.
+
+    Subclasses :class:`jwt.InvalidTokenError` on purpose. Every existing
+    fail-closed caller of :func:`verify_receipt` — including
+    :func:`verify_chain` — funnels errors through ``except jwt.PyJWTError``,
+    and a verifier that trials several candidate keys relies on that same
+    catch to move on to the next key. Raising outside the PyJWT hierarchy
+    would turn those handled denials into unhandled crashes, so the distinct
+    machine-readable ``code`` rides along on a PyJWT-compatible exception
+    instead.
+    """
+
+    code = "receipt_kid_mismatch"
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
+        self.code = ReceiptKeyIdMismatchError.code
+
+
+def receipt_key_id(public_key: ec.EllipticCurvePublicKey) -> str:
+    """Return the ``kid`` a receipt signed by ``public_key``'s pair must carry.
+
+    This is the shared ``sha256:<hex>`` SPKI fingerprint from
+    :mod:`vibap.key_fingerprint`, untruncated. Using the full digest keeps the
+    receipt ``kid`` byte-identical to the ``spki_fingerprint`` the offline
+    verifier already prints for its trust roots, so an evaluator can match the
+    two by eye without knowing a second convention. The identifier is
+    content-addressed: a verifier recomputes it from the public key it already
+    holds rather than resolving it through a registry, which is what lets the
+    check run fully offline.
+    """
+
+    try:
+        return _public_key_fingerprint(public_key)
+    except KeyFingerprintError as exc:
+        raise ReceiptKeyIdMismatchError(
+            "receipt signing key cannot be named: it is not SPKI-encodable"
+        ) from exc
+
+
 def sign_receipt(
     receipt: ExecutionReceipt, private_key: ec.EllipticCurvePrivateKey
 ) -> str:
+    # ``kid`` goes in the protected header only, never in the payload: the
+    # v0.2 claim schema sets ``additionalProperties: false`` and
+    # ``_validate_receipt_claim_schema`` rejects unknown claims, so a payload
+    # field would be a breaking format migration. The header is already
+    # covered by the JWS signature, so it is protected either way.
+    #
+    # Scope note: passports (``vibap.passport``) and the kernel attestation
+    # carry no ``kid`` yet even though the same argument applies to them.
+    # Keeping this change to receipts keeps the diff reviewable; extending it
+    # is deliberate follow-up work, not an oversight.
     return jwt.encode(
         receipt.to_dict(),
         private_key,
         algorithm=ALGORITHM,
-        headers={"typ": RECEIPT_JWT_TYPE},
+        headers={
+            "typ": RECEIPT_JWT_TYPE,
+            "kid": receipt_key_id(private_key.public_key()),
+        },
         json_encoder=RFC8785JSONEncoder,
     )
+
+
+def _assert_key_id_binds_verifying_key(
+    jwt_str: str, public_key: ec.EllipticCurvePublicKey
+) -> None:
+    """Fail closed when a present ``kid`` names a different key.
+
+    Called only after the signature has already verified, so reaching a
+    mismatch means the header asserts a binding the signature contradicts.
+    In practice an attacker who rewrites ``kid`` invalidates the signature —
+    the header is inside the JWS signing input — so this is defence in depth
+    against a producer bug or a key mix-up rather than a forgery gate.
+
+    An **absent** ``kid`` is not an error. Receipts issued before Ardur
+    emitted one must keep verifying exactly as they did, and
+    ``docs/specs/execution-receipt-v0.1.md`` §9.1 makes the header a SHOULD,
+    not a MUST. Absence is silence, not a contradicted claim.
+    """
+
+    try:
+        header = jwt.get_unverified_header(jwt_str)
+    except jwt.PyJWTError as exc:  # pragma: no cover - decode already parsed it
+        raise ReceiptKeyIdMismatchError(
+            f"receipt JWS header could not be read: {exc}"
+        ) from exc
+    if "kid" not in header:
+        return
+    kid = header["kid"]
+    expected = receipt_key_id(public_key)
+    if not isinstance(kid, str) or kid != expected:
+        # Both values are public-key fingerprints, so echoing them leaks
+        # nothing an evidence holder does not already have, and it is the
+        # only way an operator can tell a key mix-up from a real tamper.
+        raise ReceiptKeyIdMismatchError(
+            "receipt kid names a different signing key than the key used to "
+            f"verify it (header kid={kid!r}, verifying key={expected!r})"
+        )
 
 
 def _validate_canonical_payload(jwt_str: str, claims: dict[str, Any]) -> None:
@@ -876,6 +971,13 @@ def verify_receipt(
     ``now - iat_past_skew_s ... now + iat_future_skew_s`` now fail closed.
     Set both skews to ``None`` (or 0) only in archival-replay contexts
     where legitimately old receipts must be re-verified.
+
+    The protected-header ``kid``, when present, must equal
+    :func:`receipt_key_id` of ``public_key`` or verification fails with
+    :class:`ReceiptKeyIdMismatchError`. ``kid`` is never used to *select* a
+    key — ``public_key`` is still the caller's trust decision — and an absent
+    ``kid`` is not an error, so receipts predating the header verify
+    unchanged.
     """
     claims = jwt.decode(
         jwt_str,
@@ -892,6 +994,10 @@ def verify_receipt(
             "verify_iat": False,
         },
     )
+    # Header/key binding gate. Runs after jwt.decode so the signature has
+    # already been checked and ``public_key`` is known to be a usable key;
+    # a present-but-wrong kid then fails closed rather than warning.
+    _assert_key_id_binds_verifying_key(jwt_str, public_key)
     # Bounded-iat skew gate (FIX-6 + round 3 generalization, 2026-04-28).
     # Delegates to the shared helper so receipts and every other JWT
     # verifier (AAT, MD, passport, status list) use the same window.
