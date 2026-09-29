@@ -832,7 +832,7 @@ def test_full_profile_rejects_reused_receipt_and_log_key(tmp_path: Path) -> None
     fixture = _fixture(tmp_path, reuse_receipt_as_log_key=True)
     with pytest.raises(OfflineVerificationError) as caught:
         _verify(fixture)
-    assert caught.value.code == "trust_roots_not_independent"
+    assert caught.value.code == "trust_roots_not_distinct"
 
 
 def test_cli_rejects_mode_specific_options_instead_of_ignoring_them(

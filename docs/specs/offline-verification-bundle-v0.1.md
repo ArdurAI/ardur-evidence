@@ -127,13 +127,19 @@ all networking by the operating system.
 
 ## 5. Trust Roots
 
-The verifier accepts these independent public inputs:
+The verifier accepts these three public inputs as separate parameters:
 
 | Role | Accepted key |
 |---|---|
 | Receipt issuer | ES256 / P-256 public key |
 | Transparency log | Ed25519 or ECDSA key accepted by the anchor profile |
 | Receiver | ES256 / P-256 public key distinct from the receipt issuer |
+
+The verifier checks only that the three keys are distinct
+(`trust_roots_not_distinct`). Distinctness is necessary for independence and is
+not sufficient: it does not establish that the keys are held or administered by
+different parties. A single operator holding all three private keys passes
+every check this profile performs.
 
 Reports include SHA-256 fingerprints of each SubjectPublicKeyInfo value. The
 operator or auditor must compare those fingerprints with an independently

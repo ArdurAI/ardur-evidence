@@ -314,8 +314,10 @@ ardur verify --attestation-token JWT [--keys-dir DIR]
              [--output FILE] [--redact-paths]
 ```
 
-Full-bundle mode performs no network request and requires independent receipt,
-transparency-log, and receiver public-key inputs. It verifies the ordered
+Full-bundle mode performs no network request and requires three separate
+public-key inputs: receipt issuer, transparency log, and receiver. The verifier
+rejects a bundle that reuses one key for two roles; it cannot check that the
+keys are held by different parties. It verifies the ordered
 receipt chain and every inclusion proof. Compliant receipts require a receiver
 co-signature; denied or insufficient-evidence receipts require an explicit
 self-attested envelope because successful enforcement prevented receiver

@@ -145,8 +145,10 @@ become true only after exact digest comparison.
 Tool-server operators provision a dedicated P-256 receiver key outside the
 agent's authority and publish its public key through an authenticated channel.
 The private key SHOULD use mode `0600` or a managed signing service. Do not
-reuse the governor receipt key: independent keys and control planes are the
-source of the assurance gain.
+reuse the governor receipt key. The assurance gain comes from independent keys
+and independent control planes; the verifier can enforce only the first. An
+envelope signed under a separate key on the same operator's control plane adds
+a second signature, not a second party.
 
 ```python
 from vibap.receiver_attestation import ReceiverAttestationShim

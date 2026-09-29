@@ -686,7 +686,7 @@ def verify_offline_input(
         }
         if len(trust_fingerprints) != 3:
             raise OfflineVerificationError(
-                "trust_roots_not_independent",
+                "trust_roots_not_distinct",
                 "receipt issuer, transparency log, and receiver must use distinct trust roots",
             )
 

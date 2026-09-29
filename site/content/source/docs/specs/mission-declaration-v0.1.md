@@ -2,7 +2,7 @@
 title: "Mission Declaration (MD) v0.1"
 description: "This document defines version `v0.1` of the Mission Declaration (MD)"
 source_path: "docs/specs/mission-declaration-v0.1.md"
-source_sha256: "30fd5b7e9f58818761afd83059a950e519bb3e31a06078e19087a8b49e89f209"
+source_sha256: "03783b91731fa56bd645be7f210f04d4febda4f3d999d483798a04cf908c11dd"
 weight: 100
 maturity: ["public-now"]
 claim_types: ["protocol-spec"]
@@ -615,6 +615,12 @@ Their semantics are:
    the verifier can check or cache.
 A child artifact MUST NOT weaken the receipt level below the mission's
 declared level.
+
+Implementation status: the reference proxy emits `evidence_level:
+self_signed` for every receipt. It does not produce `counter_signed` or
+`transparency_logged`, and it does not check an emitted receipt against the
+mission's declared `receipt_policy.level`. Treat the non-minimal levels as
+design-layer requirements until a conformance vector demonstrates otherwise.
 ### 8.16. `conformance_profile`
 The `conformance_profile` claim identifies the minimum protocol profile the
 deployment claims for the mission.
