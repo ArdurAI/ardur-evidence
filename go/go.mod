@@ -6,7 +6,7 @@ require (
 	github.com/cedar-policy/cedar-go v1.8.0
 	github.com/cilium/ebpf v0.22.0
 	github.com/cyberphone/json-canonicalization v0.0.0-20241213102144-19d51d7fe467
-	github.com/go-jose/go-jose/v4 v4.1.4
+	github.com/go-jose/go-jose/v4 v4.1.5
 	github.com/sigstore/sigstore-go v1.3.0
 	github.com/spiffe/go-spiffe/v2 v2.8.1
 	golang.org/x/sys v0.48.0
