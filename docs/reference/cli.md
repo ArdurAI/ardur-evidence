@@ -293,10 +293,12 @@ ardur verify EVIDENCE.json
              --receiver-public-key FILE
              [--max-bundle-age-s SECONDS]
              [--freshness-clock-skew-s SECONDS]
+             [--seal FILE]
              [--html-report FILE] [--output FILE] [--json]
              [--redact-paths] [--unsafe-show-sensitive]
 
 ardur verify RECEIPTS.jsonl --receipt-public-key FILE --chain-only
+             [--seal FILE]
 
 ardur verify --token JWT [--keys-dir DIR]
 
@@ -340,6 +342,16 @@ Raw JSONL receipt journals require `--chain-only`. The result is
 `verified_chain_only`; removing sidecars cannot silently produce a full
 `verified` result. `--verify-expiry` optionally enforces short runtime expiry
 windows during archival review.
+
+`--seal FILE` supplies the signed session attestation that closed the session.
+Its `receipt_chain_head` must name the journal's final receipt: the same
+receipt id and the SHA-256 of that receipt's compact JWS. Otherwise
+verification fails with `receipt_chain_head_mismatch`, which exposes receipts
+removed from, or added to, the end of the journal; the hash-linked chain alone
+already exposes removals from its start or middle. The seal is verified under
+the receipt issuer key without an issuance-time window, and its expiry is
+enforced only with `--verify-expiry`. Without `--seal`, the report lists that
+the end of the journal was not checked.
 
 Reports are redacted by default. `--unsafe-show-sensitive` is an explicit
 local-only opt-in. `--html-report` writes an atomic mode-`0600`, no-JavaScript

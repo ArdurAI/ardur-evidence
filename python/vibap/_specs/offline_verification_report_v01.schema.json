@@ -135,6 +135,7 @@
       "maxItems": 2048,
       "items": {"$ref": "#/$defs/timelineEntry"}
     },
+    "session_seal": {"$ref": "#/$defs/sessionSeal"},
     "limitations": {
       "type": "array",
       "minItems": 1,
@@ -148,6 +149,16 @@
     }
   },
   "$defs": {
+    "sessionSeal": {
+      "type": "object",
+      "description": "Present only when a signed session attestation was supplied and its receipt_chain_head named the final receipt of the verified journal.",
+      "additionalProperties": false,
+      "required": ["checked", "chain_head_matches"],
+      "properties": {
+        "checked": {"const": true},
+        "chain_head_matches": {"const": true}
+      }
+    },
     "sha256HexString": {
       "type": "string",
       "pattern": "^[0-9a-f]{64}$"

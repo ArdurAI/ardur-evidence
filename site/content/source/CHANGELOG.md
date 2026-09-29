@@ -2,7 +2,7 @@
 title: "Changelog"
 description: "All notable changes to Ardur will be documented in this file."
 source_path: "CHANGELOG.md"
-source_sha256: "f3158713a3af3503cb8bc67cb7a439b72993e2fea4cdc2835dc1917b90f0daea"
+source_sha256: "050d51bef4c65bf0c3603d2b88e61ca66d6dd0e75b0d6ad764e6a19cb0b8e3db"
 weight: 100
 maturity: ["public-now"]
 claim_types: ["documentation"]
@@ -22,6 +22,13 @@ All notable changes to Ardur will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- `ardur verify --seal FILE` checks a signed session attestation against the
+  journal: its `receipt_chain_head` must name the final receipt, so a journal
+  with receipts removed from, or added to, its end fails with
+  `receipt_chain_head_mismatch`. The report gains an optional `session_seal`
+  section, and a report without a seal now lists that the end of the journal
+  was not checked. `verify_attestation` accepts archival-replay options
+  (`verify_expiry`, issuance-time skews) with unchanged defaults.
 - Execution Receipts now carry a `kid` in the JWS protected header, closing a
   gap where the implementation did not meet its own published spec
   (`docs/specs/execution-receipt-v0.1.md` §9.1 has always said the header

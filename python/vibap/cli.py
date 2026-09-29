@@ -2421,6 +2421,7 @@ def cmd_verify(args: argparse.Namespace) -> int:
             args.receipt_public_key is not None,
             args.chain_only,
             args.verify_expiry,
+            getattr(args, "seal", None) is not None,
             args.html_report is not None,
             args.unsafe_show_sensitive,
             args.max_bundle_age_s is not None,
@@ -2641,6 +2642,7 @@ def _load_p256_public_key(path: Path, *, label: str):  # type: ignore[no-untyped
 def _cmd_verify_offline(args: argparse.Namespace) -> int:
     from .offline_verification import (
         OfflineVerificationError,
+        load_session_seal,
         render_cli_report,
         verify_offline_path,
         write_html_report,
@@ -2749,6 +2751,11 @@ def _cmd_verify_offline(args: argparse.Namespace) -> int:
             receiver_clock_skew_s=args.receiver_clock_skew_s,
             max_bundle_age_s=args.max_bundle_age_s,
             freshness_clock_skew_s=args.freshness_clock_skew_s,
+            session_seal=(
+                load_session_seal(args.seal)
+                if getattr(args, "seal", None) is not None
+                else None
+            ),
             redact=not args.unsafe_show_sensitive,
         )
         if args.html_report is not None:
@@ -7881,6 +7888,15 @@ def build_parser() -> argparse.ArgumentParser:
         "--verify-expiry",
         action="store_true",
         help="also enforce short receipt expiry windows during archival verification",
+    )
+    verify.add_argument(
+        "--seal",
+        type=str,
+        help=(
+            "file holding the signed session attestation whose receipt_chain_head "
+            "must name the journal's final receipt; rejects receipts removed from "
+            "or added to the end"
+        ),
     )
     verify.add_argument(
         "--json", action="store_true", help="print a machine-readable explorer report"

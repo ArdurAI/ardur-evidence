@@ -41,8 +41,13 @@ completeness, detects a fully suppressed call, proves receiver correctness, or
 turns an uninstrumented provider path into an observed one.
 
 The Offline Verification Bundle v0.1 verifies the evidence it is given; it
-cannot prove that a presenter supplied every action, an unsuppressed chain
-prefix/tail, or an honest receiver. Trust roots are external inputs and their
+cannot prove that a presenter supplied every action or an honest receiver. The
+hash-linked chain exposes receipts removed from its start or middle; receipts
+removed from its end are exposed only when the verifier is also given the
+session seal (`--seal`), the signed session attestation whose
+`receipt_chain_head` names the final receipt. The seal is signed by the same
+issuer as the receipts, so it proves the journal is the whole sealed chain, not
+that the issuer recorded every action. Trust roots are external inputs and their
 SPKI fingerprints must be checked against an independent inventory or channel.
 Raw JSONL verification is an explicit lower-assurance `--chain-only` mode.
 Offline verification reports `revocation_checked: false`, so a receipt revoked

@@ -100,9 +100,12 @@ An implementation conforming to this profile MUST:
 9. when the verifier supplies a maximum bundle age, reject a latest signed
    receipt `iat` outside that age or the configured future-clock-skew
    allowance;
-10. fail the complete operation on the first invalid or missing required item;
+10. when the verifier supplies a session seal, verify it under the receipt
+    issuer key and require its `receipt_chain_head` to name the final receipt:
+    the same `receipt_id` and the SHA-256 of that receipt's compact JWS;
+11. fail the complete operation on the first invalid or missing required item;
     and
-11. report `verification_mode: offline`, `revocation_checked: false`, whether
+12. report `verification_mode: offline`, `revocation_checked: false`, whether
     signed receipt age was checked, and that one-time replay was not checked.
 
 Archival verification does not reject a receipt merely because its short
@@ -159,6 +162,10 @@ The verifier emits a chronological timeline with:
 - budget deltas, remaining budgets, and selected numeric cost measurements;
 - receipt/chain, transparency, and receiver evidence status plus exact
   anchor, log, and receiver-attestation references; and
+- `session_seal` with `checked` and `chain_head_matches`, present only when a
+  session seal was supplied and named the final receipt; without a seal, the
+  limitations state that receipts removed from the end of the journal cannot be
+  detected; and
 - a final verifier result and explicit limitations.
 
 Authority narrowing is reported only when signed budget evidence proves a

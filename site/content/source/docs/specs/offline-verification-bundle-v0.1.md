@@ -2,7 +2,7 @@
 title: "Offline Verification Bundle v0.1"
 description: "Status: implemented public profile for independently runnable Ardur receipt"
 source_path: "docs/specs/offline-verification-bundle-v0.1.md"
-source_sha256: "d18161ca140bfbe4b6380b07f8b5cecba00d6779b4fce29e99070395f957362f"
+source_sha256: "9db2a3b0e0b49a82c98ae0f8e473a84fe88ff62379c0a8645f006b2324fb2445"
 weight: 100
 maturity: ["public-now"]
 claim_types: ["protocol-spec"]
@@ -117,9 +117,12 @@ An implementation conforming to this profile MUST:
 9. when the verifier supplies a maximum bundle age, reject a latest signed
    receipt `iat` outside that age or the configured future-clock-skew
    allowance;
-10. fail the complete operation on the first invalid or missing required item;
+10. when the verifier supplies a session seal, verify it under the receipt
+    issuer key and require its `receipt_chain_head` to name the final receipt:
+    the same `receipt_id` and the SHA-256 of that receipt's compact JWS;
+11. fail the complete operation on the first invalid or missing required item;
     and
-11. report `verification_mode: offline`, `revocation_checked: false`, whether
+12. report `verification_mode: offline`, `revocation_checked: false`, whether
     signed receipt age was checked, and that one-time replay was not checked.
 
 Archival verification does not reject a receipt merely because its short
@@ -176,6 +179,10 @@ The verifier emits a chronological timeline with:
 - budget deltas, remaining budgets, and selected numeric cost measurements;
 - receipt/chain, transparency, and receiver evidence status plus exact
   anchor, log, and receiver-attestation references; and
+- `session_seal` with `checked` and `chain_head_matches`, present only when a
+  session seal was supplied and named the final receipt; without a seal, the
+  limitations state that receipts removed from the end of the journal cannot be
+  detected; and
 - a final verifier result and explicit limitations.
 
 Authority narrowing is reported only when signed budget evidence proves a

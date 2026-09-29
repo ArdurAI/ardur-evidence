@@ -15,6 +15,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Mapping
 
+import jwt
 from cryptography.hazmat.primitives.asymmetric import ec
 from jsonschema import Draft202012Validator, ValidationError
 
@@ -22,6 +23,7 @@ from ._specs import (
     offline_verification_bundle_v01_schema,
     offline_verification_report_v01_schema,
 )
+from .attestation import verify_attestation
 from .key_fingerprint import KeyFingerprintError
 from .key_fingerprint import public_key_fingerprint as _public_key_fingerprint
 from .receipt import ReceiptChainError, verify_chain
@@ -61,6 +63,13 @@ MAX_INPUT_BYTES = 64 * 1024 * 1024
 MAX_JOURNAL_ENTRIES = 2048
 MAX_JWS_BYTES = 2 * 1024 * 1024
 REDACTION_MARKER = "[REDACTED]"
+# A hash-linked chain proves that no receipt was removed from its middle or its
+# start, but a journal cut short after any receipt is still a valid chain. Only
+# a signed session seal that names the final receipt can expose that.
+SESSION_SEAL_ABSENT_LIMITATION = (
+    "no session seal was supplied, so receipts removed from the end of the "
+    "journal cannot be detected"
+)
 
 _SECRET_ASSIGNMENT_RE = re.compile(
     r"(?i)\b(api[_-]?key|access[_-]?token|refresh[_-]?token|token|secret|password|passwd|authorization)"
@@ -262,6 +271,28 @@ def load_offline_input(path: str | Path) -> OfflineInput:
                     f"unsupported offline bundle schema {value.get('schema_version')!r}",
                 )
     return _load_jsonl_journal(text, source_sha256)
+
+
+def load_session_seal(path: str | Path) -> str:
+    """Read one session attestation token from a bounded regular file."""
+
+    raw = _read_bounded_regular_file(Path(path))
+    try:
+        token = raw.decode("ascii").strip()
+    except UnicodeDecodeError as exc:
+        raise OfflineVerificationError(
+            "session_seal_invalid", "the session seal file must contain one ASCII token"
+        ) from exc
+    if (
+        not token
+        or len(token) > MAX_JWS_BYTES
+        or any(character.isspace() for character in token)
+    ):
+        raise OfflineVerificationError(
+            "session_seal_invalid",
+            "the session seal file must contain exactly one signed token",
+        )
+    return token
 
 
 def public_key_fingerprint(public_key: Any) -> str:
@@ -633,6 +664,71 @@ def _bundle_freshness_report(
     }
 
 
+def _verify_session_seal(
+    seal: str,
+    *,
+    receipt_public_key: ec.EllipticCurvePublicKey,
+    tokens: list[str],
+    claims: list[dict[str, Any]],
+    verify_expiry: bool,
+) -> dict[str, Any]:
+    """Check that a signed session attestation seals this journal's final receipt.
+
+    The attestation's ``receipt_chain_head`` names the last receipt the issuer
+    signed for the session. Together with the hash-linked chain, a matching
+    head proves the journal is the whole sealed chain: nothing removed from
+    the end and nothing appended after it. Like the receipts, the seal is
+    verified for archival replay, without an issuance-time window.
+    """
+
+    seal = seal.strip() if isinstance(seal, str) else ""
+    if not seal or len(seal.encode("utf-8")) > MAX_JWS_BYTES:
+        raise OfflineVerificationError(
+            "session_seal_invalid", "the session seal must be a non-empty signed token"
+        )
+    if not tokens or len(tokens) != len(claims):
+        raise OfflineVerificationError(
+            "session_seal_invalid", "a session seal needs a non-empty verified journal"
+        )
+    try:
+        seal_claims = verify_attestation(
+            seal,
+            receipt_public_key,
+            verify_expiry=verify_expiry,
+            iat_future_skew_s=None,
+            iat_past_skew_s=None,
+        )
+    except jwt.PyJWTError as exc:
+        raise OfflineVerificationError(
+            "session_seal_invalid", f"the session seal failed verification: {exc}"
+        ) from exc
+    head = seal_claims.get("receipt_chain_head")
+    if not isinstance(head, Mapping):
+        raise OfflineVerificationError(
+            "session_seal_missing_chain_head",
+            "the session seal does not name a final receipt (receipt_chain_head)",
+        )
+    sealed_hash = head.get("receipt_jwt_sha256")
+    sealed_id = head.get("receipt_id")
+    if (
+        head.get("hash_algorithm") != "sha-256"
+        or not isinstance(sealed_hash, str)
+        or not isinstance(sealed_id, str)
+    ):
+        raise OfflineVerificationError(
+            "session_seal_invalid", "the session seal's receipt_chain_head is malformed"
+        )
+    final_hash = hashlib.sha256(tokens[-1].encode("ascii")).hexdigest()
+    if sealed_hash != final_hash or sealed_id != claims[-1].get("receipt_id"):
+        raise OfflineVerificationError(
+            "receipt_chain_head_mismatch",
+            "the journal's final receipt is not the receipt the session seal names; "
+            "receipts were removed from, or added to, the end of the journal",
+            index=len(tokens) - 1,
+        )
+    return {"checked": True, "chain_head_matches": True}
+
+
 def verify_offline_input(
     offline_input: OfflineInput,
     *,
@@ -646,6 +742,7 @@ def verify_offline_input(
     receiver_clock_skew_s: int = 60,
     max_bundle_age_s: int | None = None,
     freshness_clock_skew_s: int | None = None,
+    session_seal: str | None = None,
     redact: bool = True,
     include_correlation_fields: bool = False,
 ) -> dict[str, Any]:
@@ -655,6 +752,11 @@ def verify_offline_input(
     replay are not enforced. Set ``max_bundle_age_s`` to reject a latest signed
     receipt outside a verifier-clock age/skew window. That age bound does not
     prevent repeated presentation inside the accepted window.
+
+    ``session_seal`` is an optional signed session attestation. When supplied,
+    its ``receipt_chain_head`` must name the journal's final receipt, so a
+    journal with receipts removed from, or added to, its end is rejected.
+    Without a seal, the report lists that gap under its limitations.
     """
 
     if offline_input.kind == "journal" and not chain_only:
@@ -702,6 +804,17 @@ def verify_offline_input(
     except (ReceiptChainError, TypeError, ValueError) as exc:
         raise OfflineVerificationError("receipt_chain_invalid", str(exc)) from exc
     _validate_claim_sequence(claims)
+    session_seal_report = (
+        _verify_session_seal(
+            session_seal,
+            receipt_public_key=receipt_public_key,
+            tokens=tokens,
+            claims=claims,
+            verify_expiry=verify_expiry,
+        )
+        if session_seal is not None
+        else None
+    )
 
     timeline: list[dict[str, Any]] = []
     for index, (entry, item) in enumerate(
@@ -866,6 +979,7 @@ def verify_offline_input(
             ],
         },
         "timeline": timeline,
+        **({"session_seal": session_seal_report} if session_seal_report else {}),
         "limitations": [
             "offline verification did not query a revocation registry",
             "a receipt revoked after signing may remain cryptographically valid offline",
@@ -875,6 +989,7 @@ def verify_offline_input(
                 else "offline verification did not enforce receipt age or one-time replay"
             ),
             "valid signatures do not prove receiver correctness, action-set completeness, or non-collusion",
+            *([] if session_seal_report else [SESSION_SEAL_ABSENT_LIMITATION]),
             "grant changes alone do not prove scope containment without the signed grant artifacts",
             *(
                 [
@@ -947,6 +1062,11 @@ def render_cli_report(report: Mapping[str, Any]) -> str:
                 if summary.get("unknown_count", 0)
                 else ""
             )
+        ),
+        *(
+            ["Session seal: checked | the final receipt matches the sealed chain head"]
+            if report.get("session_seal")
+            else []
         ),
         f"Source SHA-256: {_display(report['source']['sha256'])}",
         "Trust roots:",
@@ -1074,6 +1194,11 @@ def render_html_report(report: Mapping[str, Any]) -> str:
         f"<li>{esc(root['role'])}: <code>{esc(root['spki_fingerprint'])}</code></li>"
         for root in report["trust_roots"]
     )
+    session_seal = (
+        "<p>Session seal: checked; the final receipt matches the sealed chain head.</p>"
+        if report.get("session_seal")
+        else ""
+    )
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -1114,7 +1239,7 @@ def render_html_report(report: Mapping[str, Any]) -> str:
       <div class="metric"><strong>{summary["receiver_attested_count"]}</strong><br>Receiver-attested</div>
     </section>
     <h2>Verification Material</h2>
-    <p>Source SHA-256: <code>{esc(report["source"]["sha256"])}</code></p>
+    <p>Source SHA-256: <code>{esc(report["source"]["sha256"])}</code></p>{session_seal}
     <ul>{trust_roots}</ul>
     <h2>Chronological Timeline</h2>
     <table>
