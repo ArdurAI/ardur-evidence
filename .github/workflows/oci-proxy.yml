@@ -143,7 +143,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: ghcr
-      url: https://github.com/ArdurAI/ardur-evidence/pkgs/container/ardur-proxy
+      url: https://github.com/ArdurAI/ardur/pkgs/container/ardur-proxy
     permissions:
       contents: read
       id-token: write
@@ -253,7 +253,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: ghcr
-      url: https://github.com/ArdurAI/ardur-evidence/pkgs/container/ardur-proxy
+      url: https://github.com/ArdurAI/ardur/pkgs/container/ardur-proxy
     permissions:
       contents: read
       packages: write

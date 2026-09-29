@@ -2,7 +2,7 @@
 title: "Execution Receipt v0.1"
 description: "This document defines the **Execution Receipt (ER)** claim set for per-hop"
 source_path: "docs/specs/execution-receipt-v0.1.md"
-source_sha256: "1afbf535fc6f842750389ffa39f4f73b41796a2f58a176fa197327aaae27fee5"
+source_sha256: "b9810eddcb5e7112c83c51c9baf2c80d3c178d0b4098d5a6980bd815e0200da4"
 weight: 100
 maturity: ["public-now"]
 claim_types: ["protocol-spec"]
@@ -138,6 +138,15 @@ An implementation MUST treat `insufficient_evidence` as distinct from
   countersigned or vouched for out of band.
 - `transparency_logged`: the ER or its digest is anchored in an append-only
   transparency system.
+
+Implementation status: the reference proxy emits `evidence_level:
+self_signed` for every receipt; no shipping path produces `counter_signed` or
+`transparency_logged`. A receiver counter-signature exists as a separate
+artifact — the receiver-attestation envelope with its `assurance_tier` field —
+which wraps the exact receipt rather than re-signing it, because rewriting a
+receipt after issuance would invalidate its issuer signature and every
+hash-chained descendant. Treat the non-minimal values as design-layer until a
+conformance vector demonstrates otherwise.
 
 The enum is ordered by increasing assurance, but the schema does not carry the
 counter-signature or transparency proof itself. Those bindings are deployment
