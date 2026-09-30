@@ -2,7 +2,7 @@
 title: "Offline Verification Bundle v0.1"
 description: "Status: implemented public profile for independently runnable Ardur receipt"
 source_path: "docs/specs/offline-verification-bundle-v0.1.md"
-source_sha256: "ca9a6183d03477702a5eb0f6328d1b398ee78335a27a70f1e608bbd2a50b14f0"
+source_sha256: "9db2a3b0e0b49a82c98ae0f8e473a84fe88ff62379c0a8645f006b2324fb2445"
 weight: 100
 maturity: ["public-now"]
 claim_types: ["protocol-spec"]
@@ -117,9 +117,12 @@ An implementation conforming to this profile MUST:
 9. when the verifier supplies a maximum bundle age, reject a latest signed
    receipt `iat` outside that age or the configured future-clock-skew
    allowance;
-10. fail the complete operation on the first invalid or missing required item;
+10. when the verifier supplies a session seal, verify it under the receipt
+    issuer key and require its `receipt_chain_head` to name the final receipt:
+    the same `receipt_id` and the SHA-256 of that receipt's compact JWS;
+11. fail the complete operation on the first invalid or missing required item;
     and
-11. report `verification_mode: offline`, `revocation_checked: false`, whether
+12. report `verification_mode: offline`, `revocation_checked: false`, whether
     signed receipt age was checked, and that one-time replay was not checked.
 
 Archival verification does not reject a receipt merely because its short
@@ -144,13 +147,19 @@ all networking by the operating system.
 
 ## 5. Trust Roots
 
-The verifier accepts these independent public inputs:
+The verifier accepts these three public inputs as separate parameters:
 
 | Role | Accepted key |
 |---|---|
 | Receipt issuer | ES256 / P-256 public key |
 | Transparency log | Ed25519 or ECDSA key accepted by the anchor profile |
 | Receiver | ES256 / P-256 public key distinct from the receipt issuer |
+
+The verifier checks only that the three keys are distinct
+(`trust_roots_not_distinct`). Distinctness is necessary for independence and is
+not sufficient: it does not establish that the keys are held or administered by
+different parties. A single operator holding all three private keys passes
+every check this profile performs.
 
 Reports include SHA-256 fingerprints of each SubjectPublicKeyInfo value. The
 operator or auditor must compare those fingerprints with an independently
@@ -170,6 +179,10 @@ The verifier emits a chronological timeline with:
 - budget deltas, remaining budgets, and selected numeric cost measurements;
 - receipt/chain, transparency, and receiver evidence status plus exact
   anchor, log, and receiver-attestation references; and
+- `session_seal` with `checked` and `chain_head_matches`, present only when a
+  session seal was supplied and named the final receipt; without a seal, the
+  limitations state that receipts removed from the end of the journal cannot be
+  detected; and
 - a final verifier result and explicit limitations.
 
 Authority narrowing is reported only when signed budget evidence proves a
@@ -206,6 +219,35 @@ means verification succeeded rather than that nothing was wrong; and a receipt
 verdict of `insufficient_evidence` appears in the timeline as the decision
 `ERROR`, which is a governance verdict about missing evidence, not a verifier
 fault.
+
+Each anchored timeline entry also reports the anchor's `backend` verbatim and
+an `anchor_class` derived from it: `self-hosted-log` for `c2sp-local-v1` and
+`public-log-protocol` for `rekor-v1`. A valid anchor MUST carry both fields.
+The summary reports `anchored_count` (valid anchors of any class) and
+`public_log_protocol_anchored_count`.
+
+The two classes are not symmetric, and a consumer must not treat them as
+mirror images. `self-hosted-log` is a checked property: that backend writes a
+local log, so the anchor is operator-administered by construction and MUST NOT
+satisfy an externally-anchored gate. `public-log-protocol` is weaker than its
+name may suggest — it records only that the public-log submission protocol was
+used and that its evidence verified under the pinned transparency-log key. The
+backend kind is supplied by the presenter and selects a verification branch; it
+is not a signed statement about where the log ran. The Rekor URL accepts any
+HTTPS host, including one inside the operator's deployment, and unlike the
+self-hosted branch the checkpoint origin is not pinned.
+
+A consumer gating on externally-bounded evidence therefore MUST NOT use
+`anchored_count` alone, and MUST NOT treat
+`public_log_protocol_anchored_count` as sufficient. That count is necessary but
+not sufficient: the consumer MUST additionally confirm out of band that the
+pinned transparency-log key belongs to a log administered outside the
+operator's authority, comparing `trust_roots[transparency-log].spki_fingerprint`
+and the entry's `log_id` against an independently trusted inventory.
+Independence remains an operational property the verifier cannot check (see the
+transparency anchor profile, section 5.2). Note that because a bundle pins a
+single transparency-log key, a `self-hosted-log` anchor anywhere in the bundle
+is evidence that the pinned key is operator-held.
 
 ## 8. CLI and Package
 

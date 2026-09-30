@@ -11,7 +11,7 @@ import jwt
 from cryptography.hazmat.primitives.asymmetric import ec
 
 from .canonical_json import RFC8785JSONEncoder, canonical_json_bytes
-from .passport import ALGORITHM
+from .passport import ALGORITHM, DEFAULT_IAT_FUTURE_SKEW_S, DEFAULT_IAT_PAST_SKEW_S
 
 
 ATTESTATION_SCHEMA_VERSION = "ardur.behavioral_attestation.v0.2"
@@ -74,6 +74,10 @@ def issue_attestation(
 def verify_attestation(
     token: str,
     public_key: ec.EllipticCurvePublicKey,
+    *,
+    verify_expiry: bool = True,
+    iat_future_skew_s: int | None = DEFAULT_IAT_FUTURE_SKEW_S,
+    iat_past_skew_s: int | None = DEFAULT_IAT_PAST_SKEW_S,
 ) -> dict[str, Any]:
     """Verify a Phase-3.3 attestation JWT and return its claims.
 
@@ -82,6 +86,10 @@ def verify_attestation(
     runs, defending against a briefly-compromised attestation issuer
     minting tokens with iat far in the future. Defaults to ±300s future
     / 30 days past — same envelope as the rest of the JWT surface.
+
+    Offline archival verification passes ``verify_expiry=False`` and ``None``
+    skews, matching how it verifies receipts, so an old attestation can still
+    seal the journal it was issued for.
     """
     # Local import keeps attestation.py free of a cyclic dep on passport
     # at module load time.
@@ -94,12 +102,18 @@ def verify_attestation(
         audience="vibap-attestation-verifier",
         options={
             "require": ["iss", "sub", "aud", "iat", "exp", "jti", "passport_jti"],
+            "verify_exp": verify_expiry,
             # Use the explicit window helper below; PyJWT's default check
             # uses zero leeway and clashes with cross-node clock drift.
             "verify_iat": False,
         },
     )
-    assert_iat_in_window(claims.get("iat"), field_name="attestation iat")
+    assert_iat_in_window(
+        claims.get("iat"),
+        future_skew_s=iat_future_skew_s,
+        past_skew_s=iat_past_skew_s,
+        field_name="attestation iat",
+    )
     schema_version = claims.get("schema_version")
     if schema_version not in {None, ATTESTATION_SCHEMA_VERSION}:
         raise jwt.InvalidTokenError(

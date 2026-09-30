@@ -101,11 +101,11 @@ ardur-policy-conformance = "vibap.policy_conformance:main"
 ardur-proxy = "vibap.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/ArdurAI/ardur"
-Documentation = "https://github.com/ArdurAI/ardur/tree/main/docs"
-Repository = "https://github.com/ArdurAI/ardur"
-Issues = "https://github.com/ArdurAI/ardur/issues"
-Discussions = "https://github.com/ArdurAI/ardur/discussions"
+Homepage = "https://github.com/ArdurAI/ardur-evidence"
+Documentation = "https://github.com/ArdurAI/ardur-evidence/tree/main/docs"
+Repository = "https://github.com/ArdurAI/ardur-evidence"
+Issues = "https://github.com/ArdurAI/ardur-evidence/issues"
+Discussions = "https://github.com/ArdurAI/ardur-evidence/discussions"
 
 [tool.setuptools.packages.find]
 include = ["vibap*"]

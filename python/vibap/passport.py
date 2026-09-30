@@ -603,6 +603,33 @@ def load_public_key(keys_dir: str | Path | None = None) -> ec.EllipticCurvePubli
     return serialization.load_pem_public_key(pub_path.read_bytes())
 
 
+def load_report_public_key(
+    keys_dir: str | Path | None = None,
+    *,
+    evidence_present: bool,
+) -> ec.EllipticCurvePublicKey | None:
+    """Load the verification key for a read-only report path.
+
+    Reporting must never mint key material: a command whose job is to verify
+    existing evidence cannot be allowed to invent the key it verifies against.
+    But a fresh install with no receipts still needs its onboarding report, so
+    a missing ``passport_public.pem`` is only an error when there is something
+    to verify.
+
+    The key directory itself is validated either way, so a malformed
+    ``--keys-dir`` keeps failing closed whether or not evidence exists.
+
+    Returns ``None`` only when no evidence is present and no key exists.
+    """
+
+    if evidence_present:
+        return load_existing_public_key(keys_dir)
+    try:
+        return load_existing_public_key(keys_dir)
+    except FileNotFoundError:
+        return None
+
+
 def load_existing_public_key(
     keys_dir: str | Path | None = None,
 ) -> ec.EllipticCurvePublicKey:

@@ -48,15 +48,15 @@ This file is generated from the public evidence site.
 
 ## Curated Documentation
 
-- [Get Started](https://ardurai.github.io/ardur/get-started/): Run the current proof.
+- [Get Started](https://ardurai.github.io/ardur-evidence/get-started/): Run the current proof.
 
 ## Source-Backed Repository Documentation
 
-- [Ardur](https://ardurai.github.io/ardur/source/readme/): Source-backed project overview.
+- [Ardur](https://ardurai.github.io/ardur-evidence/source/readme/): Source-backed project overview.
 
 ## Optional
 
-- [Work in Progress](https://ardurai.github.io/ardur/work-in-progress/): Active work and boundaries.
+- [Work in Progress](https://ardurai.github.io/ardur-evidence/work-in-progress/): Active work and boundaries.
 """
 
     def write_output(self, text: str | None = None) -> None:
@@ -88,8 +88,8 @@ This file is generated from the public evidence site.
 
     def test_rejects_duplicate_urls_across_sections(self) -> None:
         text = self.valid_text().replace(
-            "https://ardurai.github.io/ardur/work-in-progress/",
-            "https://ardurai.github.io/ardur/get-started/",
+            "https://ardurai.github.io/ardur-evidence/work-in-progress/",
+            "https://ardurai.github.io/ardur-evidence/get-started/",
         )
         self.write_output(text)
         failures = validator.validate(self.rendered_root)
@@ -99,7 +99,7 @@ This file is generated from the public evidence site.
 
     def test_rejects_noncanonical_origin(self) -> None:
         text = self.valid_text().replace(
-            "https://ardurai.github.io/ardur/get-started/",
+            "https://ardurai.github.io/ardur-evidence/get-started/",
             "https://example.invalid/ardur/get-started/",
         )
         self.write_output(text)
@@ -108,8 +108,8 @@ This file is generated from the public evidence site.
 
     def test_rejects_invalid_port_without_crashing(self) -> None:
         text = self.valid_text().replace(
-            "https://ardurai.github.io/ardur/get-started/",
-            "https://ardurai.github.io:notaport/ardur/get-started/",
+            "https://ardurai.github.io/ardur-evidence/get-started/",
+            "https://ardurai.github.io:notaport/ardur-evidence/get-started/",
         )
         self.write_output(text)
         failures = validator.validate(self.rendered_root)
@@ -117,8 +117,8 @@ This file is generated from the public evidence site.
 
     def test_rejects_explicit_zero_port(self) -> None:
         text = self.valid_text().replace(
-            "https://ardurai.github.io/ardur/get-started/",
-            "https://ardurai.github.io:0/ardur/get-started/",
+            "https://ardurai.github.io/ardur-evidence/get-started/",
+            "https://ardurai.github.io:0/ardur-evidence/get-started/",
         )
         self.write_output(text)
         failures = validator.validate(self.rendered_root)
@@ -126,8 +126,8 @@ This file is generated from the public evidence site.
 
     def test_rejects_empty_userinfo(self) -> None:
         text = self.valid_text().replace(
-            "https://ardurai.github.io/ardur/get-started/",
-            "https://@ardurai.github.io/ardur/get-started/",
+            "https://ardurai.github.io/ardur-evidence/get-started/",
+            "https://@ardurai.github.io/ardur-evidence/get-started/",
         )
         self.write_output(text)
         failures = validator.validate(self.rendered_root)
@@ -135,8 +135,8 @@ This file is generated from the public evidence site.
 
     def test_rejects_encoded_path_traversal(self) -> None:
         text = self.valid_text().replace(
-            "https://ardurai.github.io/ardur/get-started/",
-            "https://ardurai.github.io/ardur/%2e%2e/get-started/",
+            "https://ardurai.github.io/ardur-evidence/get-started/",
+            "https://ardurai.github.io/ardur-evidence/%2e%2e/get-started/",
         )
         self.write_output(text)
         failures = validator.validate(self.rendered_root)
@@ -144,8 +144,8 @@ This file is generated from the public evidence site.
 
     def test_rejects_encoded_control_character_in_path(self) -> None:
         text = self.valid_text().replace(
-            "https://ardurai.github.io/ardur/get-started/",
-            "https://ardurai.github.io/ardur/get%00started/",
+            "https://ardurai.github.io/ardur-evidence/get-started/",
+            "https://ardurai.github.io/ardur-evidence/get%00started/",
         )
         self.write_output(text)
         failures = validator.validate(self.rendered_root)

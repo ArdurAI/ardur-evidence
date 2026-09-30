@@ -13,7 +13,7 @@ Do not open a public issue for an active vulnerability.
 
 Report security issues privately via one of:
 
-- **Preferred:** [GitHub Security Advisory](https://github.com/ArdurAI/ardur/security/advisories/new) — creates a private advisory thread that the maintainer will triage.
+- **Preferred:** [GitHub Security Advisory](https://github.com/ArdurAI/ardur-evidence/security/advisories/new) — creates a private advisory thread that the maintainer will triage.
 - **Fallback:** email `gnani.nutakki@gmail.com` if the advisory path is not available or not working for you.
 
 Both channels land in the same inbox; the advisory path is preferred because it carries better history and coordination tooling for the fix.

@@ -2421,6 +2421,7 @@ def cmd_verify(args: argparse.Namespace) -> int:
             args.receipt_public_key is not None,
             args.chain_only,
             args.verify_expiry,
+            getattr(args, "seal", None) is not None,
             args.html_report is not None,
             args.unsafe_show_sensitive,
             args.max_bundle_age_s is not None,
@@ -2641,6 +2642,7 @@ def _load_p256_public_key(path: Path, *, label: str):  # type: ignore[no-untyped
 def _cmd_verify_offline(args: argparse.Namespace) -> int:
     from .offline_verification import (
         OfflineVerificationError,
+        load_session_seal,
         render_cli_report,
         verify_offline_path,
         write_html_report,
@@ -2749,6 +2751,11 @@ def _cmd_verify_offline(args: argparse.Namespace) -> int:
             receiver_clock_skew_s=args.receiver_clock_skew_s,
             max_bundle_age_s=args.max_bundle_age_s,
             freshness_clock_skew_s=args.freshness_clock_skew_s,
+            session_seal=(
+                load_session_seal(args.seal)
+                if getattr(args, "seal", None) is not None
+                else None
+            ),
             redact=not args.unsafe_show_sensitive,
         )
         if args.html_report is not None:
@@ -3273,10 +3280,20 @@ def cmd_anchor(args: argparse.Namespace) -> int:
                 raise TransparencyError(
                     "local anchoring requires --local-log, --log-private-key, and --origin"
                 )
+            # --keys-dir is optional here: local anchoring works with no
+            # receipt key at all. When the operator does supply one, use it,
+            # so a receipt signed by a different issuer is refused before the
+            # irreversible log write rather than at verification time.
+            local_receipt_public_key = (
+                load_existing_public_key(keys_dir=args.keys_dir)
+                if args.keys_dir is not None
+                else None
+            )
             backend = LocalSignedLogBackend(
                 args.local_log,
                 _load_local_log_private_key(args.log_private_key),
                 origin=args.origin,
+                receipt_public_key=local_receipt_public_key,
             )
         else:
             if args.keys_dir is None:
@@ -3535,6 +3552,14 @@ def cmd_claude_code_report(args: argparse.Namespace) -> int:
         )
     except KeyDirectoryError as exc:
         _print_json(_keys_dir_failure_response(exc))
+        return 1
+    except FileNotFoundError:
+        # Reporting is read-only: a missing key means "nothing verifiable
+        # here", never "mint a key and verify against it".
+        _print_json(_verify_public_key_missing_response())
+        return 1
+    except ValueError:
+        _print_json(_verify_public_key_invalid_response())
         return 1
     if (
         getattr(args, "redact_paths", False)
@@ -4178,6 +4203,14 @@ def cmd_gemini_cli_report(args: argparse.Namespace) -> int:
     except KeyDirectoryError as exc:
         _print_json(_keys_dir_failure_response(exc))
         return 1
+    except FileNotFoundError:
+        # Reporting is read-only: a missing key means "nothing verifiable
+        # here", never "mint a key and verify against it".
+        _print_json(_verify_public_key_missing_response())
+        return 1
+    except ValueError:
+        _print_json(_verify_public_key_invalid_response())
+        return 1
     if (
         getattr(args, "redact_paths", False)
         and not getattr(args, "json", False)
@@ -4371,6 +4404,14 @@ def cmd_codex_app_server_report(args: argparse.Namespace) -> int:
         )
     except KeyDirectoryError as exc:
         _print_json(_keys_dir_failure_response(exc))
+        return 1
+    except FileNotFoundError:
+        # Reporting is read-only: a missing key means "nothing verifiable
+        # here", never "mint a key and verify against it".
+        _print_json(_verify_public_key_missing_response())
+        return 1
+    except ValueError:
+        _print_json(_verify_public_key_invalid_response())
         return 1
     if (
         getattr(args, "redact_paths", False)
@@ -7847,6 +7888,15 @@ def build_parser() -> argparse.ArgumentParser:
         "--verify-expiry",
         action="store_true",
         help="also enforce short receipt expiry windows during archival verification",
+    )
+    verify.add_argument(
+        "--seal",
+        type=str,
+        help=(
+            "file holding the signed session attestation whose receipt_chain_head "
+            "must name the journal's final receipt; rejects receipts removed from "
+            "or added to the end"
+        ),
     )
     verify.add_argument(
         "--json", action="store_true", help="print a machine-readable explorer report"

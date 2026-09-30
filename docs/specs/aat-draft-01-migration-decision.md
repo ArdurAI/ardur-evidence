@@ -7,7 +7,7 @@
 the separately identified `ardur.dg.aat-draft-01.v0.2` profile over draft-01.
 This is a versioned addition, not an in-place reinterpretation of draft-00.
 
-[Issue #246](https://github.com/ArdurAI/ardur/issues/246) owns this completed
+[Issue #246](https://github.com/ArdurAI/ardur-evidence/issues/246) owns this completed
 review and implementation. Independent draft-01 interoperability remains not
 demonstrated and must not be inferred from the Ardur-generated fixture.
 

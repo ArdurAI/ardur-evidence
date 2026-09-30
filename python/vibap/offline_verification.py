@@ -15,7 +15,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Mapping
 
-from cryptography.hazmat.primitives import serialization
+import jwt
 from cryptography.hazmat.primitives.asymmetric import ec
 from jsonschema import Draft202012Validator, ValidationError
 
@@ -23,23 +23,53 @@ from ._specs import (
     offline_verification_bundle_v01_schema,
     offline_verification_report_v01_schema,
 )
+from .attestation import verify_attestation
+from .key_fingerprint import KeyFingerprintError
+from .key_fingerprint import public_key_fingerprint as _public_key_fingerprint
 from .receipt import ReceiptChainError, verify_chain
 from .receiver_attestation import (
     ASSURANCE_RECEIVER_ATTESTED,
     ReceiverAttestationError,
     verify_receiver_envelope,
 )
-from .transparency import AnchorVerificationError, verify_anchor_bundle
+from .transparency import (
+    BACKEND_LOCAL_SIGNED,
+    BACKEND_REKOR_V1,
+    AnchorVerificationError,
+    verify_anchor_bundle,
+)
 
 
 BUNDLE_SCHEMA_VERSION = "ardur.offline_verification_bundle.v0.1"
 REPORT_SCHEMA_VERSION = "ardur.offline_verification_report.v0.1"
 FULL_EVIDENCE_PROFILE = "full-evidence"
 CHAIN_ONLY_PROFILE = "chain-only"
+# Anchor mechanism classes. These name the MECHANISM a backend uses, never
+# where the log ran or who holds its key. The local backend's kind does fix
+# its deployment — it writes a local file — so `self-hosted-log` is a checked
+# property. The rekor backend's kind does not: `--rekor-url` accepts any HTTPS
+# host, including one inside the operator's deployment, so the class says only
+# that the public-log submission protocol was used.
+ANCHOR_CLASS_SELF_HOSTED_LOG = "self-hosted-log"
+ANCHOR_CLASS_PUBLIC_LOG_PROTOCOL = "public-log-protocol"
+# Every backend kind verify_anchor_bundle accepts must be classified here.
+# The report schema's closed enums make an unclassified backend fail loudly
+# at the return site instead of shipping an unlabeled anchor.
+_ANCHOR_BACKEND_CLASSES = {
+    BACKEND_LOCAL_SIGNED: ANCHOR_CLASS_SELF_HOSTED_LOG,
+    BACKEND_REKOR_V1: ANCHOR_CLASS_PUBLIC_LOG_PROTOCOL,
+}
 MAX_INPUT_BYTES = 64 * 1024 * 1024
 MAX_JOURNAL_ENTRIES = 2048
 MAX_JWS_BYTES = 2 * 1024 * 1024
 REDACTION_MARKER = "[REDACTED]"
+# A hash-linked chain proves that no receipt was removed from its middle or its
+# start, but a journal cut short after any receipt is still a valid chain. Only
+# a signed session seal that names the final receipt can expose that.
+SESSION_SEAL_ABSENT_LIMITATION = (
+    "no session seal was supplied, so receipts removed from the end of the "
+    "journal cannot be detected"
+)
 
 _SECRET_ASSIGNMENT_RE = re.compile(
     r"(?i)\b(api[_-]?key|access[_-]?token|refresh[_-]?token|token|secret|password|passwd|authorization)"
@@ -243,19 +273,43 @@ def load_offline_input(path: str | Path) -> OfflineInput:
     return _load_jsonl_journal(text, source_sha256)
 
 
+def load_session_seal(path: str | Path) -> str:
+    """Read one session attestation token from a bounded regular file."""
+
+    raw = _read_bounded_regular_file(Path(path))
+    try:
+        token = raw.decode("ascii").strip()
+    except UnicodeDecodeError as exc:
+        raise OfflineVerificationError(
+            "session_seal_invalid", "the session seal file must contain one ASCII token"
+        ) from exc
+    if (
+        not token
+        or len(token) > MAX_JWS_BYTES
+        or any(character.isspace() for character in token)
+    ):
+        raise OfflineVerificationError(
+            "session_seal_invalid",
+            "the session seal file must contain exactly one signed token",
+        )
+    return token
+
+
 def public_key_fingerprint(public_key: Any) -> str:
-    """Return a stable SHA-256 SPKI fingerprint for an out-of-band trust root."""
+    """Return a stable SHA-256 SPKI fingerprint for an out-of-band trust root.
+
+    The derivation itself lives in :mod:`vibap.key_fingerprint` so that the
+    receipt ``kid`` header and these report fingerprints are the same value by
+    construction rather than by coincidence. This wrapper only re-raises in the
+    offline verifier's own error taxonomy.
+    """
 
     try:
-        spki = public_key.public_bytes(
-            serialization.Encoding.DER,
-            serialization.PublicFormat.SubjectPublicKeyInfo,
-        )
-    except (AttributeError, TypeError, ValueError) as exc:
+        return _public_key_fingerprint(public_key)
+    except KeyFingerprintError as exc:
         raise OfflineVerificationError(
             "trust_root_invalid", "trust root cannot be encoded as SPKI"
         ) from exc
-    return f"sha256:{hashlib.sha256(spki).hexdigest()}"
 
 
 def redact_text(value: str) -> str:
@@ -447,6 +501,10 @@ def _timeline_item(
                 {
                     "present": True,
                     "valid": True,
+                    "backend": anchor_report.get("backend"),
+                    "anchor_class": _ANCHOR_BACKEND_CLASSES.get(
+                        anchor_report.get("backend")
+                    ),
                     "anchor_id": anchor_report.get("anchor_id"),
                     "log_id": anchor_report.get("log_id"),
                     "log_index": anchor_report.get("log_index"),
@@ -606,6 +664,71 @@ def _bundle_freshness_report(
     }
 
 
+def _verify_session_seal(
+    seal: str,
+    *,
+    receipt_public_key: ec.EllipticCurvePublicKey,
+    tokens: list[str],
+    claims: list[dict[str, Any]],
+    verify_expiry: bool,
+) -> dict[str, Any]:
+    """Check that a signed session attestation seals this journal's final receipt.
+
+    The attestation's ``receipt_chain_head`` names the last receipt the issuer
+    signed for the session. Together with the hash-linked chain, a matching
+    head proves the journal is the whole sealed chain: nothing removed from
+    the end and nothing appended after it. Like the receipts, the seal is
+    verified for archival replay, without an issuance-time window.
+    """
+
+    seal = seal.strip() if isinstance(seal, str) else ""
+    if not seal or len(seal.encode("utf-8")) > MAX_JWS_BYTES:
+        raise OfflineVerificationError(
+            "session_seal_invalid", "the session seal must be a non-empty signed token"
+        )
+    if not tokens or len(tokens) != len(claims):
+        raise OfflineVerificationError(
+            "session_seal_invalid", "a session seal needs a non-empty verified journal"
+        )
+    try:
+        seal_claims = verify_attestation(
+            seal,
+            receipt_public_key,
+            verify_expiry=verify_expiry,
+            iat_future_skew_s=None,
+            iat_past_skew_s=None,
+        )
+    except jwt.PyJWTError as exc:
+        raise OfflineVerificationError(
+            "session_seal_invalid", f"the session seal failed verification: {exc}"
+        ) from exc
+    head = seal_claims.get("receipt_chain_head")
+    if not isinstance(head, Mapping):
+        raise OfflineVerificationError(
+            "session_seal_missing_chain_head",
+            "the session seal does not name a final receipt (receipt_chain_head)",
+        )
+    sealed_hash = head.get("receipt_jwt_sha256")
+    sealed_id = head.get("receipt_id")
+    if (
+        head.get("hash_algorithm") != "sha-256"
+        or not isinstance(sealed_hash, str)
+        or not isinstance(sealed_id, str)
+    ):
+        raise OfflineVerificationError(
+            "session_seal_invalid", "the session seal's receipt_chain_head is malformed"
+        )
+    final_hash = hashlib.sha256(tokens[-1].encode("ascii")).hexdigest()
+    if sealed_hash != final_hash or sealed_id != claims[-1].get("receipt_id"):
+        raise OfflineVerificationError(
+            "receipt_chain_head_mismatch",
+            "the journal's final receipt is not the receipt the session seal names; "
+            "receipts were removed from, or added to, the end of the journal",
+            index=len(tokens) - 1,
+        )
+    return {"checked": True, "chain_head_matches": True}
+
+
 def verify_offline_input(
     offline_input: OfflineInput,
     *,
@@ -619,6 +742,7 @@ def verify_offline_input(
     receiver_clock_skew_s: int = 60,
     max_bundle_age_s: int | None = None,
     freshness_clock_skew_s: int | None = None,
+    session_seal: str | None = None,
     redact: bool = True,
     include_correlation_fields: bool = False,
 ) -> dict[str, Any]:
@@ -628,6 +752,11 @@ def verify_offline_input(
     replay are not enforced. Set ``max_bundle_age_s`` to reject a latest signed
     receipt outside a verifier-clock age/skew window. That age bound does not
     prevent repeated presentation inside the accepted window.
+
+    ``session_seal`` is an optional signed session attestation. When supplied,
+    its ``receipt_chain_head`` must name the journal's final receipt, so a
+    journal with receipts removed from, or added to, its end is rejected.
+    Without a seal, the report lists that gap under its limitations.
     """
 
     if offline_input.kind == "journal" and not chain_only:
@@ -659,7 +788,7 @@ def verify_offline_input(
         }
         if len(trust_fingerprints) != 3:
             raise OfflineVerificationError(
-                "trust_roots_not_independent",
+                "trust_roots_not_distinct",
                 "receipt issuer, transparency log, and receiver must use distinct trust roots",
             )
 
@@ -675,6 +804,17 @@ def verify_offline_input(
     except (ReceiptChainError, TypeError, ValueError) as exc:
         raise OfflineVerificationError("receipt_chain_invalid", str(exc)) from exc
     _validate_claim_sequence(claims)
+    session_seal_report = (
+        _verify_session_seal(
+            session_seal,
+            receipt_public_key=receipt_public_key,
+            tokens=tokens,
+            claims=claims,
+            verify_expiry=verify_expiry,
+        )
+        if session_seal is not None
+        else None
+    )
 
     timeline: list[dict[str, Any]] = []
     for index, (entry, item) in enumerate(
@@ -759,6 +899,19 @@ def verify_offline_input(
             )
         timeline.append(timeline_item)
 
+    anchored_total = sum(item["evidence"]["transparency"]["valid"] for item in timeline)
+    self_hosted_anchored_count = sum(
+        bool(item["evidence"]["transparency"]["valid"])
+        and item["evidence"]["transparency"].get("anchor_class")
+        == ANCHOR_CLASS_SELF_HOSTED_LOG
+        for item in timeline
+    )
+    public_log_protocol_anchored_count = sum(
+        bool(item["evidence"]["transparency"]["valid"])
+        and item["evidence"]["transparency"].get("anchor_class")
+        == ANCHOR_CLASS_PUBLIC_LOG_PROTOCOL
+        for item in timeline
+    )
     verified_at = int(time.time())
     freshness = _bundle_freshness_report(
         claims,
@@ -814,9 +967,8 @@ def verify_offline_input(
             "deny_count": sum(item["decision"] == "DENY" for item in timeline),
             "error_count": sum(item["decision"] == "ERROR" for item in timeline),
             "unknown_count": sum(item["decision"] == "UNKNOWN" for item in timeline),
-            "anchored_count": sum(
-                item["evidence"]["transparency"]["valid"] for item in timeline
-            ),
+            "anchored_count": anchored_total,
+            "public_log_protocol_anchored_count": public_log_protocol_anchored_count,
             "receiver_attested_count": sum(
                 item["evidence"]["receiver"]["valid"] for item in timeline
             ),
@@ -827,6 +979,7 @@ def verify_offline_input(
             ],
         },
         "timeline": timeline,
+        **({"session_seal": session_seal_report} if session_seal_report else {}),
         "limitations": [
             "offline verification did not query a revocation registry",
             "a receipt revoked after signing may remain cryptographically valid offline",
@@ -836,7 +989,35 @@ def verify_offline_input(
                 else "offline verification did not enforce receipt age or one-time replay"
             ),
             "valid signatures do not prove receiver correctness, action-set completeness, or non-collusion",
+            *([] if session_seal_report else [SESSION_SEAL_ABSENT_LIMITATION]),
             "grant changes alone do not prove scope containment without the signed grant artifacts",
+            *(
+                [
+                    f"{self_hosted_anchored_count} of {anchored_total} valid anchors use the "
+                    "self-hosted signed log; a self-hosted log is operator-administered "
+                    "evidence and does not establish external anchoring"
+                ]
+                if self_hosted_anchored_count
+                else []
+            ),
+            *(
+                [
+                    f"{public_log_protocol_anchored_count} of {anchored_total} valid anchors "
+                    "declare the rekor-v1 backend; that backend kind is supplied by the "
+                    "presenter and selects a verification branch, so it does not establish "
+                    "that any log outside the operator's deployment was contacted"
+                ]
+                if public_log_protocol_anchored_count
+                else []
+            ),
+            *(
+                [
+                    "an anchor verified under a caller-supplied transparency-log key is "
+                    "only as independent as the out-of-band channel that supplied that key"
+                ]
+                if anchored_total
+                else []
+            ),
         ],
         "verified_at": verified_at,
     }
@@ -882,6 +1063,11 @@ def render_cli_report(report: Mapping[str, Any]) -> str:
                 else ""
             )
         ),
+        *(
+            ["Session seal: checked | the final receipt matches the sealed chain head"]
+            if report.get("session_seal")
+            else []
+        ),
         f"Source SHA-256: {_display(report['source']['sha256'])}",
         "Trust roots:",
         *(
@@ -913,8 +1099,15 @@ def render_cli_report(report: Mapping[str, Any]) -> str:
             f"why={_display('; '.join(authority['why']))}"
         )
         evidence = item["evidence"]
+        transparency = evidence["transparency"]
+        anchor_display = str(transparency["valid"]).lower()
+        if transparency.get("backend"):
+            anchor_display += (
+                f" [{_display(transparency['backend'])}"
+                f"/{_display(transparency.get('anchor_class'))}]"
+            )
         lines.append(
-            f"      receipt=valid chain=valid anchor={str(evidence['transparency']['valid']).lower()} "
+            f"      receipt=valid chain=valid anchor={anchor_display} "
             f"receiver={_display(evidence['receiver']['status'])}"
         )
         for outcome in item["policy_outcomes"]:
@@ -972,6 +1165,11 @@ def render_html_report(report: Mapping[str, Any]) -> str:
             f"{key}={value}" for key, value in sorted(item["cost_outcomes"].items())
         )
         transparency = evidence["transparency"]
+        anchor_backend_cell = (
+            f"{esc(transparency['backend'])} ({esc(transparency.get('anchor_class'))})"
+            if transparency.get("backend")
+            else "none"
+        )
         receiver = evidence["receiver"]
         rows.append(
             "<tr>"
@@ -983,6 +1181,7 @@ def render_html_report(report: Mapping[str, Any]) -> str:
             f"<td>{esc(policy or 'no signed policy outcomes')}</td>"
             f"<td>{esc(costs or 'no signed cost outcomes')}</td>"
             f"<td>receipt: valid<br>chain: valid<br>anchor: {str(evidence['transparency']['valid']).lower()}"
+            f"<br>anchor backend: {anchor_backend_cell}"
             f"<br>anchor ref: <code>{esc(transparency.get('anchor_id') or 'none')}</code>"
             f"<br>log: {esc(transparency.get('log_id') or 'none')} [{esc(transparency.get('log_index'))}]"
             f"<br>receiver: {esc(receiver['status'])}"
@@ -994,6 +1193,11 @@ def render_html_report(report: Mapping[str, Any]) -> str:
     trust_roots = "".join(
         f"<li>{esc(root['role'])}: <code>{esc(root['spki_fingerprint'])}</code></li>"
         for root in report["trust_roots"]
+    )
+    session_seal = (
+        "<p>Session seal: checked; the final receipt matches the sealed chain head.</p>"
+        if report.get("session_seal")
+        else ""
     )
     return f"""<!doctype html>
 <html lang="en">
@@ -1031,10 +1235,11 @@ def render_html_report(report: Mapping[str, Any]) -> str:
       <div class="metric"><strong>{summary["deny_count"]}</strong><br>DENY</div>
       <div class="metric"><strong>{summary["error_count"]}</strong><br>ERROR</div>
       <div class="metric"><strong>{summary["anchored_count"]}</strong><br>Anchored</div>
+      <div class="metric"><strong>{summary["public_log_protocol_anchored_count"]}</strong><br>Public-log protocol</div>
       <div class="metric"><strong>{summary["receiver_attested_count"]}</strong><br>Receiver-attested</div>
     </section>
     <h2>Verification Material</h2>
-    <p>Source SHA-256: <code>{esc(report["source"]["sha256"])}</code></p>
+    <p>Source SHA-256: <code>{esc(report["source"]["sha256"])}</code></p>{session_seal}
     <ul>{trust_roots}</ul>
     <h2>Chronological Timeline</h2>
     <table>

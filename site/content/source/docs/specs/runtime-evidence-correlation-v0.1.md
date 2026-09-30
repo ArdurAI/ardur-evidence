@@ -38,7 +38,7 @@ its event stream is complete.
 - [`conformance/runtime-evidence-v0.1/`](/__ardur_internal__/source/docs/specs/conformance/runtime-evidence-v0.1/readme/)
   contains a signed receipt chain, a public receipt key, one event per adapter,
   and production-generated reports.
-- [`python/vibap/runtime_evidence.py`](https://github.com/ArdurAI/ardur/blob/__ARDUR_SOURCE_REF__/python/vibap/runtime_evidence.py)
+- [`python/vibap/runtime_evidence.py`](https://github.com/ArdurAI/ardur-evidence/blob/__ARDUR_SOURCE_REF__/python/vibap/runtime_evidence.py)
   implements bounded loading, adapters, matching, redaction, report validation,
   and owner-only atomic output.
 

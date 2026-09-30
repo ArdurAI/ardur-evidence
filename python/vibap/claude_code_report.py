@@ -8,7 +8,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any, Mapping
 
-from .passport import DEFAULT_HOME, load_public_key
+from .passport import DEFAULT_HOME, load_report_public_key
 from .receipt import verify_chain
 from .shareable_redaction import path_aliases, redact_local_paths
 
@@ -394,7 +394,9 @@ def build_claude_code_report(
     )
     resolved_keys_dir = (keys_dir or (resolved_home / "keys")).expanduser().resolve()
     receipt_files = sorted(resolved_chain_dir.rglob("receipts.jsonl"))
-    public_key = load_public_key(resolved_keys_dir)
+    public_key = load_report_public_key(
+        resolved_keys_dir, evidence_present=bool(receipt_files)
+    )
 
     chains: list[dict[str, Any]] = []
     all_claims: list[dict[str, Any]] = []

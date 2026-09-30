@@ -8,8 +8,8 @@ body:
       value: |
         Thanks for reporting a bug. Before filing, please check:
 
-        - the [open issues](https://github.com/ArdurAI/ardur/issues?q=is%3Aissue) — your bug may already be tracked
-        - [Discussions](https://github.com/ArdurAI/ardur/discussions) — if it's a "how do I" or "is this expected", that belongs in Q&A there, not here
+        - the [open issues](https://github.com/ArdurAI/ardur-evidence/issues?q=is%3Aissue) — your bug may already be tracked
+        - [Discussions](https://github.com/ArdurAI/ardur-evidence/discussions) — if it's a "how do I" or "is this expected", that belongs in Q&A there, not here
 
   - type: input
     id: version

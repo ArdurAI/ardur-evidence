@@ -2,7 +2,7 @@
 title: "Ardur Receiver Attestation v0.1"
 description: "This document defines a portable receiver-attestation envelope for immutable"
 source_path: "docs/specs/receiver-attestation-v0.1.md"
-source_sha256: "42532daa9e804a9725ddfc523b03110addf996838a741ec7f7c38dac39e5794f"
+source_sha256: "f91b4d0ed6314ac65e9b8bb4bd915b87d1f5959e39f195e1e5006559c538dcab"
 weight: 100
 maturity: ["public-now"]
 claim_types: ["protocol-spec"]
@@ -162,8 +162,10 @@ become true only after exact digest comparison.
 Tool-server operators provision a dedicated P-256 receiver key outside the
 agent's authority and publish its public key through an authenticated channel.
 The private key SHOULD use mode `0600` or a managed signing service. Do not
-reuse the governor receipt key: independent keys and control planes are the
-source of the assurance gain.
+reuse the governor receipt key. The assurance gain comes from independent keys
+and independent control planes; the verifier can enforce only the first. An
+envelope signed under a separate key on the same operator's control plane adds
+a second signature, not a second party.
 
 ```python
 from vibap.receiver_attestation import ReceiverAttestationShim

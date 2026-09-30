@@ -10,7 +10,7 @@ body:
 
         - describe the *use case*, not the implementation — we may have a better path
         - explain what you've already tried, even if it didn't work
-        - if it's a major change, expect to discuss it in [Discussions → Ideas](https://github.com/ArdurAI/ardur/discussions/categories/ideas) first
+        - if it's a major change, expect to discuss it in [Discussions → Ideas](https://github.com/ArdurAI/ardur-evidence/discussions/categories/ideas) first
 
   - type: textarea
     id: use_case

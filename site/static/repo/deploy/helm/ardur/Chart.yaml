@@ -10,9 +10,9 @@ type: application
 version: 0.1.0-alpha
 appVersion: "0.1.0-alpha"
 
-home: https://github.com/ArdurAI/ardur
+home: https://github.com/ArdurAI/ardur-evidence
 sources:
-  - https://github.com/ArdurAI/ardur
+  - https://github.com/ArdurAI/ardur-evidence
 maintainers:
   - name: Gnani Rahul
     email: gnani.nutakki@gmail.com

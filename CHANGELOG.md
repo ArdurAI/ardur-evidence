@@ -5,6 +5,28 @@ All notable changes to Ardur will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- `ardur verify --seal FILE` checks a signed session attestation against the
+  journal: its `receipt_chain_head` must name the final receipt, so a journal
+  with receipts removed from, or added to, its end fails with
+  `receipt_chain_head_mismatch`. The report gains an optional `session_seal`
+  section, and a report without a seal now lists that the end of the journal
+  was not checked. `verify_attestation` accepts archival-replay options
+  (`verify_expiry`, issuance-time skews) with unchanged defaults.
+- Execution Receipts now carry a `kid` in the JWS protected header, closing a
+  gap where the implementation did not meet its own published spec
+  (`docs/specs/execution-receipt-v0.1.md` §9.1 has always said the header
+  SHOULD include one). The value is content-addressed — the `sha256:<hex>`
+  SPKI fingerprint of the signing key — so a verifier recomputes it from the
+  public key it already holds, with no registry lookup and no network access.
+  It reuses the same derivation that produces `spki_fingerprint` in offline
+  verification reports, now shared via `vibap.key_fingerprint`.
+  `verify_receipt` compares the header against the verifying key **only when
+  `kid` is present**: receipts issued before this change carry none and verify
+  exactly as they did before, with no format migration. A present-but-mismatched
+  `kid` fails closed with `receipt_kid_mismatch`. The claim set is untouched —
+  `kid` is header-only, so the v0.2 payload schema and its pinned JCS digest
+  are unchanged. Scope is receipts only; passports and attestations are
+  unchanged.
 - `--output` flag added to `doctor`, `status`, `setup`, `doctor-claude-code`,
   and `protect claude-code` for atomically writing the JSON response to an
   owner-only file. Every other JSON-producing command (`verify`, `posture`,
@@ -14,6 +36,14 @@ All notable changes to Ardur will be documented in this file.
   commands and returns a confirmation with `report_sha256`.
 - `ardur latency-gate evaluate` now supports `--output` and `--redact-paths`,
   making it consistent with every other JSON-producing CLI command.
+
+### Changed
+- The repository was renamed from `ArdurAI/ardur` to `ArdurAI/ardur-evidence`
+  on 2026-09-29, and the project is now called Ardur Evidence. Repository
+  links, package URLs and the GitHub Pages address
+  (`https://ardurai.github.io/ardur-evidence/`) point at the new name.
+  Protocol identifiers (`ardur.*` schema names, `application/ardur.er+jwt`)
+  and the Go module path are unchanged.
 
 ### Fixed
 - Non-`EADDRINUSE` `OSError` from `ardur start` and `ardur hub` now produces

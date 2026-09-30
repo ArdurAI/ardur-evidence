@@ -25,7 +25,7 @@ This page is generated from the public repository source file. Edit the source f
 
 The `latency-bench` CI job (`.github/workflows/tests.yml`) emits
 machine-readable latency evidence reports (see
-[`python/vibap/latency_report.py`](https://github.com/ArdurAI/ardur/blob/__ARDUR_SOURCE_REF__/python/vibap/latency_report.py) and
+[`python/vibap/latency_report.py`](https://github.com/ArdurAI/ardur-evidence/blob/__ARDUR_SOURCE_REF__/python/vibap/latency_report.py) and
 [ADR-027's predecessor work in issue #379]) for four Claude hook benchmark
 paths. Each report carries the raw `samples_ms` distribution, recomputable
 median/p95/p99 via the `nearest_rank` method, a `threshold_result`, and any

@@ -22,7 +22,7 @@ EXPECTED_SECTIONS = (
 )
 SITE_SCHEME = "https"
 SITE_HOST = "ardurai.github.io"
-SITE_PATH_PREFIX = "/ardur/"
+SITE_PATH_PREFIX = "/ardur-evidence/"
 FORBIDDEN_MARKERS = (
     "blob/dev",
     "tree/dev",

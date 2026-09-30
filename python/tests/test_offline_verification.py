@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import copy
 import hashlib
 import json
@@ -11,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec, ed25519
 from jsonschema import Draft202012Validator
 
@@ -31,8 +32,13 @@ from vibap.receiver_attestation import (
     self_attested_envelope,
 )
 from vibap.transparency import (
+    ANCHORED_BACKEND_KINDS,
     BACKEND_LOCAL_SIGNED,
+    BACKEND_REKOR_V1,
     LocalSignedLogBackend,
+    RekorV1Backend,
+    _hash_leaf,
+    _signed_checkpoint,
     pending_anchor_bundle,
 )
 
@@ -285,6 +291,7 @@ def test_full_bundle_verifies_offline_and_reports_signed_narrowing(
         "error_count": 0,
         "unknown_count": 0,
         "anchored_count": 3,
+        "public_log_protocol_anchored_count": 0,
         "receiver_attested_count": 2,
         "authority_narrowing_steps": [1, 2],
     }
@@ -825,7 +832,7 @@ def test_full_profile_rejects_reused_receipt_and_log_key(tmp_path: Path) -> None
     fixture = _fixture(tmp_path, reuse_receipt_as_log_key=True)
     with pytest.raises(OfflineVerificationError) as caught:
         _verify(fixture)
-    assert caught.value.code == "trust_roots_not_independent"
+    assert caught.value.code == "trust_roots_not_distinct"
 
 
 def test_cli_rejects_mode_specific_options_instead_of_ignoring_them(
@@ -949,6 +956,7 @@ def test_committed_public_fixture_is_verifiable() -> None:
         "error_count": 0,
         "unknown_count": 0,
         "anchored_count": 3,
+        "public_log_protocol_anchored_count": 0,
         "receiver_attested_count": 2,
         "authority_narrowing_steps": [1, 2],
     }
@@ -1043,6 +1051,233 @@ def test_report_schema_rejects_a_report_missing_unknown_count() -> None:
 
     errors = list(Draft202012Validator(schema).iter_errors(committed))
     assert errors and "unknown_count" in errors[0].message
+
+
+def test_report_schema_rejects_a_report_missing_protocol_anchor_count() -> None:
+    """A report must state its public-log-protocol anchor count, even when zero."""
+
+    root = Path(__file__).resolve().parents[2]
+    schema = json.loads(
+        (root / "docs/specs/offline-verification-report-v0.1.schema.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    committed = json.loads(
+        (root / "docs/specs/fixtures/offline-verification-v0.1-report.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    del committed["summary"]["public_log_protocol_anchored_count"]
+
+    errors = list(Draft202012Validator(schema).iter_errors(committed))
+    assert errors and "public_log_protocol_anchored_count" in errors[0].message
+
+
+def test_self_hosted_anchor_is_labeled_and_never_counts_as_external() -> None:
+    """A c2sp-local-v1 anchor must be visibly operator-administered.
+
+    Before this labeling existed, a report anchored by the operator's own
+    self-hosted signed log was byte-indistinguishable from one anchored in an
+    external log: the evidence block dropped the verified bundle's ``backend``
+    and ``anchored_count`` counted both alike, so a gate for
+    externally-bounded evidence could be satisfied by operator-held keys.
+    """
+
+    fixture_dir, keys = _committed_report_inputs()
+    report = offline.verify_offline_path(
+        fixture_dir / "offline-verification-v0.1.json", **keys
+    )
+
+    for item in report["timeline"]:
+        transparency = item["evidence"]["transparency"]
+        assert transparency["backend"] == "c2sp-local-v1"
+        assert transparency["anchor_class"] == "self-hosted-log"
+    assert report["summary"]["anchored_count"] == 3
+    assert report["summary"]["public_log_protocol_anchored_count"] == 0
+    assert (
+        "3 of 3 valid anchors use the self-hosted signed log; a self-hosted "
+        "log is operator-administered evidence and does not establish "
+        "external anchoring"
+    ) in report["limitations"]
+    assert any(
+        "only as independent as the out-of-band channel" in item
+        for item in report["limitations"]
+    )
+
+    cli = offline.render_cli_report(report)
+    assert "anchor=true [c2sp-local-v1/self-hosted-log]" in cli
+    rendered = offline.render_html_report(report)
+    assert "anchor backend: c2sp-local-v1 (self-hosted-log)" in rendered
+    assert "Public-log protocol" in rendered
+
+
+def test_rekor_anchor_is_not_presented_as_proof_of_external_anchoring(
+    tmp_path: Path,
+) -> None:
+    """A rekor-v1 anchor built from local keys must not read as external.
+
+    ``backend.kind`` is supplied by the presenter and only selects a
+    verification branch. An operator who holds the receipt key and the pinned
+    transparency-log key can therefore mint a bundle that declares
+    ``rekor-v1`` without any log outside their deployment being contacted --
+    the Rekor URL accepts any HTTPS host, and unlike the self-hosted branch
+    the checkpoint origin is not pinned. The report must classify the
+    mechanism without asserting the deployment.
+    """
+
+    receipt_key = ec.generate_private_key(ec.SECP256R1())
+    receiver_key = ec.generate_private_key(ec.SECP256R1())
+    log_key = ec.generate_private_key(ec.SECP256R1())
+    timestamp = 1_800_000_000
+    observed = datetime.fromtimestamp(timestamp, timezone.utc).strftime(
+        "%Y-%m-%dT%H:%M:%SZ"
+    )
+    event = PolicyEvent(
+        timestamp=observed,
+        step_id="step:rekor:0",
+        actor="spiffe://fixture.ardur.dev/agent/reviewer",
+        verifier_id="spiffe://fixture.ardur.dev/verifier",
+        tool_name="read_file",
+        arguments={"path": "workspace/item-0.txt"},
+        action_class="read",
+        target="workspace/item-0.txt",
+        resource_family="filesystem",
+        side_effect_class="none",
+        decision=Decision.PERMIT,
+        reason="policy permit",
+        passport_jti="grant:rekor-fixture",
+        trace_id="trace:rekor-fixture",
+        run_nonce="rekor_fixture_nonce_0123456789",
+    )
+    receipt = build_receipt(Decision.PERMIT, event, parent_receipt_hash=None)
+    receipt.iat = timestamp
+    receipt.exp = timestamp + 300
+    token = sign_receipt(receipt, receipt_key)
+    integrated_time = timestamp + 5
+
+    def fake_transport(
+        url: str, payload: bytes, timeout: float, max_bytes: int
+    ) -> bytes:
+        body = canonical_json_bytes(json.loads(payload))
+        body_b64 = base64.b64encode(body).decode("ascii")
+        root_hash = _hash_leaf(body)
+        checkpoint = _signed_checkpoint(
+            "rekor.fixture - 1234", 1, root_hash, log_key, signer_name="rekor.fixture"
+        )
+        set_payload = canonical_json_bytes(
+            {
+                "body": body_b64,
+                "integratedTime": integrated_time,
+                "logIndex": 0,
+                "logID": "fixture-rekor-log-id",
+            }
+        )
+        return canonical_json_bytes(
+            {
+                "fixture-entry": {
+                    "body": body_b64,
+                    "integratedTime": integrated_time,
+                    "logID": "fixture-rekor-log-id",
+                    "logIndex": 0,
+                    "verification": {
+                        "inclusionProof": {
+                            "checkpoint": checkpoint,
+                            "hashes": [],
+                            "logIndex": 0,
+                            "rootHash": root_hash.hex(),
+                            "treeSize": 1,
+                        },
+                        "signedEntryTimestamp": base64.b64encode(
+                            log_key.sign(set_payload, ec.ECDSA(hashes.SHA256()))
+                        ).decode("ascii"),
+                    },
+                }
+            }
+        )
+
+    anchor = RekorV1Backend(
+        "http://127.0.0.1:3000",
+        allow_insecure_loopback=True,
+        transport=fake_transport,
+    ).submit(
+        pending_anchor_bundle(token, backend_kind=BACKEND_REKOR_V1),
+        receipt_private_key=receipt_key,
+    )
+    shim = ReceiverAttestationShim(
+        receiver_private_key=receiver_key,
+        receipt_public_key=receipt_key.public_key(),
+        receiver_id="spiffe://fixture.ardur.dev/tool",
+        key_id="fixture-receiver:v1",
+    )
+    request = {
+        "jsonrpc": "2.0",
+        "id": "rekor-0",
+        "method": "tools/call",
+        "params": {
+            "name": event.tool_name,
+            "arguments": dict(event.arguments),
+            "_meta": {MCP_RECEIPT_META_KEY: token},
+        },
+    }
+    response = {
+        "jsonrpc": "2.0",
+        "id": "rekor-0",
+        "result": {"content": [{"type": "text", "text": "ok"}], "isError": False},
+    }
+    attested = shim.attach_to_mcp_response(
+        request=request, response=response, observed_at=timestamp + 1
+    )
+    bundle = {
+        "schema_version": BUNDLE_SCHEMA_VERSION,
+        "profile": "full-evidence",
+        "journal": [
+            {
+                "receipt_jwt": token,
+                "transparency_anchor": anchor,
+                "receiver_attestation": attested["result"]["_meta"][
+                    MCP_ATTESTATION_META_KEY
+                ],
+            }
+        ],
+    }
+
+    bundle_path = tmp_path / "rekor-bundle.json"
+    bundle_path.write_bytes(canonical_json_bytes(bundle) + b"\n")
+
+    report = verify_offline_input(
+        load_offline_input(bundle_path),
+        receipt_public_key=receipt_key.public_key(),
+        log_public_key=log_key.public_key(),
+        receiver_public_key=receiver_key.public_key(),
+        max_registration_delay_s=60,
+    )
+
+    transparency = report["timeline"][0]["evidence"]["transparency"]
+    assert transparency["backend"] == BACKEND_REKOR_V1
+    assert transparency["anchor_class"] == "public-log-protocol"
+    assert report["summary"]["public_log_protocol_anchored_count"] == 1
+
+    # Nothing in the artifact may call this externally anchored, and the
+    # presenter-supplied nature of the backend kind must be disclosed.
+    limitations = " ".join(report["limitations"])
+    assert "declare the rekor-v1 backend" in limitations
+    assert "supplied by the presenter" in limitations
+    assert "outside the operator's deployment was contacted" in limitations
+    assert "only as independent as the out-of-band channel" in limitations
+    assert "external-log" not in json.dumps(report)
+
+
+def test_anchor_class_covers_every_backend_the_verifier_accepts() -> None:
+    """Every backend verify_anchor_bundle can emit must carry a class label.
+
+    verify_anchor_bundle rejects unknown backend kinds, so this mapping and
+    that check must move together; an anchor backend without a class would
+    fail the closed report schema at the return site.
+    """
+
+    assert set(offline._ANCHOR_BACKEND_CLASSES) == set(ANCHORED_BACKEND_KINDS)
+    assert offline._ANCHOR_BACKEND_CLASSES[BACKEND_LOCAL_SIGNED] == "self-hosted-log"
+    assert offline._ANCHOR_BACKEND_CLASSES[BACKEND_REKOR_V1] == "public-log-protocol"
 
 
 def test_report_schema_is_closed_against_an_unexpected_field() -> None:
@@ -1360,8 +1595,13 @@ def test_module_main_oserror_does_not_leak_path(tmp_path: Path) -> None:
     bad_output = str(blocker / "sub" / "dir")
 
     result = subprocess.run(
-        [sys.executable, "-m", "vibap.offline_verification_fixture",
-         "--output", bad_output],
+        [
+            sys.executable,
+            "-m",
+            "vibap.offline_verification_fixture",
+            "--output",
+            bad_output,
+        ],
         capture_output=True,
         text=True,
         timeout=30,

@@ -6,7 +6,7 @@
 > code lift, and Article 06).
 >
 > GitHub stores the same content under
-> `gh api repos/ArdurAI/ardur/code-scanning/alerts/<n>`, but
+> `gh api repos/ArdurAI/ardur-evidence/code-scanning/alerts/<n>`, but
 > that surface is gated behind authenticated access to the repo's
 > security tab. This file mirrors the record into the public tree so
 > any reader (including someone reviewing the repo without GitHub
@@ -224,7 +224,7 @@ The dismissals above are visible via:
 
 ```bash
 # Each alert (replace <N> with 1, 2, 3, 4, 5, 13, 14, or 15):
-gh api repos/ArdurAI/ardur/code-scanning/alerts/<N> \
+gh api repos/ArdurAI/ardur-evidence/code-scanning/alerts/<N> \
   --jq '{state, dismissed_reason, dismissed_comment, dismissed_by, dismissed_at}'
 ```
 

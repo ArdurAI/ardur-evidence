@@ -24,7 +24,7 @@
     "disposition": "versioned-parallel-profile",
     "review_completed": "2026-07-11",
     "review_deadline": "2026-09-15",
-    "follow_up_issue": "https://github.com/ArdurAI/ardur/issues/246",
+    "follow_up_issue": "https://github.com/ArdurAI/ardur-evidence/issues/246",
     "review_triggers": [
       "v0.2.0 release promotion completes",
       "a new AAT revision is published",

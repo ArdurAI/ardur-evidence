@@ -23,7 +23,7 @@ adapter, and signs that evidence into the same Execution Receipt chain as the
 protocol path. This page is the API reference; for setup see
 [`../guides/ardur-personal-hub.md`](/__ardur_internal__/source/docs/guides/ardur-personal-hub/).
 
-Source: [`python/vibap/personal_hub.py`](https://github.com/ArdurAI/ardur/blob/__ARDUR_SOURCE_REF__/python/vibap/personal_hub.py).
+Source: [`python/vibap/personal_hub.py`](https://github.com/ArdurAI/ardur-evidence/blob/__ARDUR_SOURCE_REF__/python/vibap/personal_hub.py).
 
 ## Bind Address
 

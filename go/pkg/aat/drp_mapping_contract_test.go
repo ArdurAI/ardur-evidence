@@ -159,7 +159,7 @@ func TestDRPMappingContractIsCompleteAndFailClosed(t *testing.T) {
 	if document.AATSource.FormalIETFStanding {
 		t.Fatal("individual AAT draft must not be represented as having formal IETF standing")
 	}
-	if document.AATSource.MigrationIssue != "https://github.com/ArdurAI/ardur/issues/246" {
+	if document.AATSource.MigrationIssue != "https://github.com/ArdurAI/ardur-evidence/issues/246" {
 		t.Fatalf("unexpected AAT migration issue %q", document.AATSource.MigrationIssue)
 	}
 

@@ -598,6 +598,12 @@ Their semantics are:
    the verifier can check or cache.
 A child artifact MUST NOT weaken the receipt level below the mission's
 declared level.
+
+Implementation status: the reference proxy emits `evidence_level:
+self_signed` for every receipt. It does not produce `counter_signed` or
+`transparency_logged`, and it does not check an emitted receipt against the
+mission's declared `receipt_policy.level`. Treat the non-minimal levels as
+design-layer requirements until a conformance vector demonstrates otherwise.
 ### 8.16. `conformance_profile`
 The `conformance_profile` claim identifies the minimum protocol profile the
 deployment claims for the mission.

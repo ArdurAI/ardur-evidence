@@ -11,6 +11,15 @@ enforcement, and verifiable evidence.
 > Section 13 ("Reference Implementation Conformance Notes") for the
 > conformance map and `python/tests/test_mic_conformance.py` for the
 > 29-test validation suite.
+>
+> One receipt-evidence boundary stands open inside that map: a MIC-Evidence
+> mission must declare `receipt_policy.level` of `counter_signed` or
+> `transparency_logged`, but the reference proxy emits every receipt at
+> `evidence_level: self_signed` and does not compare an emitted receipt
+> against the declared level. Receipt evidence levels above `self_signed` are
+> design-layer values until a conformance vector demonstrates otherwise; the
+> receiver-attestation envelope's `assurance_tier` is the field that reflects
+> actual downstream evidence today.
 
 ## Core security gates (enforced by the reference proxy)
 
@@ -76,6 +85,46 @@ cost risks. See the [Advisory AI Controls reference](reference/advisory-ai-contr
 - metadata forgery or laundering
 - partial observation causing unsafe overclaims
 - authorized tools used for unauthorized purpose
+- an operator holding more than one trust root and self-attesting
+- an actor naming its own approver, or rotating approver identities to defeat
+  a per-approver ceiling
+- a presenter supplying an internally consistent evidence bundle that omits
+  actions
+
+## Trust roots and independence
+
+Ardur verification takes three public keys as separate inputs: the receipt
+issuer key, the transparency-log key, and the receiver key. The full-evidence
+profile rejects a bundle in which any two of those are the same key
+(`trust_roots_not_distinct`). That check establishes key distinctness. It does
+not establish that the keys are held by different parties, administered on
+different control planes, or kept outside the governed agent's authority.
+
+Distinctness is necessary for independence. It is not sufficient. A single
+operator holding all three private keys passes every check Ardur performs and
+can produce a bundle that verifies end to end. No receipt, anchor, or receiver
+envelope contradicts that bundle, because the same operator signed all of it.
+
+The claim boundary: Ardur establishes that a named party asserted a claim. It
+does not establish that the asserting party was independent of the party the
+claim describes.
+
+Independence is an operational property of a deployment, not a cryptographic
+property the verifier can check. It must be confirmed out of band: compare
+each reported SPKI fingerprint against an independently trusted inventory or
+channel; keep the transparency-log key and its storage outside the governed
+agent's authority; provision the receiver key on the tool-server operator's
+own control plane. A verifier that skips these steps has confirmed internal
+consistency under three keys of unknown provenance, which is exactly what a
+hostile operator also produces.
+
+External anchoring is the mechanism that bounds a hostile operator, and only
+when the log is administered outside that operator's authority. The offline
+report's `anchor_class` field says which anchoring mechanism produced each
+anchor; it does not establish that the log for that mechanism was in fact
+administered outside the operator's authority, or that any submission left the
+deployment. Confirming that remains an out-of-band step. SPIFFE does not bound
+the operator either, because SPIRE is the operator's own infrastructure.
 
 ## Hardening direction
 

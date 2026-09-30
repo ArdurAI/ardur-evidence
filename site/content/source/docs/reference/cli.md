@@ -2,7 +2,7 @@
 title: "ardur` CLI Reference"
 description: "The `ardur` console entry point ships with the Python package. After installing"
 source_path: "docs/reference/cli.md"
-source_sha256: "b511c529870fa9f3aaa163429ed4e709916e2fa97c7c852b2a957256e13e3755"
+source_sha256: "1e1a497b325df899827f417f2f1d6e7d4a9117e784e51c4c9b4c0ac994891855"
 weight: 100
 maturity: ["public-now"]
 claim_types: ["documentation"]
@@ -34,7 +34,7 @@ The CLI splits into two groups:
   `posture report`, `preflight tool-server`. Used by the local Ardur Personal
   product shape.
 
-Source: [`python/vibap/cli.py`](https://github.com/ArdurAI/ardur/blob/__ARDUR_SOURCE_REF__/python/vibap/cli.py).
+Source: [`python/vibap/cli.py`](https://github.com/ArdurAI/ardur-evidence/blob/__ARDUR_SOURCE_REF__/python/vibap/cli.py).
 
 ## Protocol Path
 
@@ -310,10 +310,12 @@ ardur verify EVIDENCE.json
              --receiver-public-key FILE
              [--max-bundle-age-s SECONDS]
              [--freshness-clock-skew-s SECONDS]
+             [--seal FILE]
              [--html-report FILE] [--output FILE] [--json]
              [--redact-paths] [--unsafe-show-sensitive]
 
 ardur verify RECEIPTS.jsonl --receipt-public-key FILE --chain-only
+             [--seal FILE]
 
 ardur verify --token JWT [--keys-dir DIR]
 
@@ -331,8 +333,10 @@ ardur verify --attestation-token JWT [--keys-dir DIR]
              [--output FILE] [--redact-paths]
 ```
 
-Full-bundle mode performs no network request and requires independent receipt,
-transparency-log, and receiver public-key inputs. It verifies the ordered
+Full-bundle mode performs no network request and requires three separate
+public-key inputs: receipt issuer, transparency log, and receiver. The verifier
+rejects a bundle that reuses one key for two roles; it cannot check that the
+keys are held by different parties. It verifies the ordered
 receipt chain and every inclusion proof. Compliant receipts require a receiver
 co-signature; denied or insufficient-evidence receipts require an explicit
 self-attested envelope because successful enforcement prevented receiver
@@ -355,6 +359,16 @@ Raw JSONL receipt journals require `--chain-only`. The result is
 `verified_chain_only`; removing sidecars cannot silently produce a full
 `verified` result. `--verify-expiry` optionally enforces short runtime expiry
 windows during archival review.
+
+`--seal FILE` supplies the signed session attestation that closed the session.
+Its `receipt_chain_head` must name the journal's final receipt: the same
+receipt id and the SHA-256 of that receipt's compact JWS. Otherwise
+verification fails with `receipt_chain_head_mismatch`, which exposes receipts
+removed from, or added to, the end of the journal; the hash-linked chain alone
+already exposes removals from its start or middle. The seal is verified under
+the receipt issuer key without an issuance-time window, and its expiry is
+enforced only with `--verify-expiry`. Without `--seal`, the report lists that
+the end of the journal was not checked.
 
 Reports are redacted by default. `--unsafe-show-sensitive` is an explicit
 local-only opt-in. `--html-report` writes an atomic mode-`0600`, no-JavaScript

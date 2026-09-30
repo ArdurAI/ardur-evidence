@@ -20,7 +20,7 @@ the setup that matches your host.
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/ArdurAI/ardur.git
+git clone https://github.com/ArdurAI/ardur-evidence.git
 cd ardur
 
 # 2. Create the dev virtualenv and install the package
@@ -44,7 +44,7 @@ old for the PEP 660 editable install.
 
 ```bash
 # 1. Clone and set up Python
-git clone https://github.com/ArdurAI/ardur.git
+git clone https://github.com/ArdurAI/ardur-evidence.git
 cd ardur
 ./scripts/setup-dev.sh --skip-go
 source python/.venv/bin/activate
@@ -135,7 +135,7 @@ The shortest current end-to-end path is provider-free and cleans up its own
 temporary state:
 
 ```bash
-git clone https://github.com/ArdurAI/ardur.git
+git clone https://github.com/ArdurAI/ardur-evidence.git
 cd ardur
 ./scripts/setup-dev.sh --skip-go
 source python/.venv/bin/activate
