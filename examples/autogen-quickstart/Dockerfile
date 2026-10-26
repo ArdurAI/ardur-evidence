@@ -21,7 +21,7 @@
 FROM ghcr.io/spiffe/spire-agent:1.15.2@sha256:1d042e4040466686e0ee46f74981ff2167c86adfadca19b3835946f4d6047536 AS spire
 
 # biscuit-python 0.4.0 embeds PyO3 0.24.1, whose supported ceiling is 3.13.
-FROM python:3.13.14-slim-trixie@sha256:9662417aace5ae7b8e2609cce472b72a8958e134ba372808abe9cc1a0c0125e6
+FROM python:3.15.0-slim-trixie@sha256:f5b92f2a669a4c347044f29367f31983280b648250ca94dea66f98c53bc87e58
 
 ARG UTIL_LINUX_VERSION=2.41.5-0+deb13u1
 ARG BSDUTILS_VERSION=1:2.41.5-0+deb13u1
