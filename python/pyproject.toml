@@ -47,7 +47,7 @@ dependencies = [
     # supported runtime modules and proxy paths, so plain installs must carry
     # them rather than relying on the development extra.
     "biscuit-python==0.4.0",
-    "spiffe>=0.2,<0.4",
+    "spiffe>=0.2,<0.5",
     # spiffe's ASN.1 dependency must stay above the three network-DoS fixes in
     # pyasn1 0.6.4 (CVE-2026-59884, CVE-2026-59885, CVE-2026-59886).
     "pyasn1>=0.6.4,<0.7",
