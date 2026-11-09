@@ -18,7 +18,7 @@
 # digests prevent a registry tag re-push from changing published demo builds.
 
 # Stage 1: pull the real spire-agent binary from the official image.
-FROM ghcr.io/spiffe/spire-agent:1.15.2@sha256:1d042e4040466686e0ee46f74981ff2167c86adfadca19b3835946f4d6047536 AS spire
+FROM ghcr.io/spiffe/spire-agent:1.16.0@sha256:ab3a8ce70435374cc5d84c81eabf0278dc046ddbc0a736d59694ba9e5975b1b6 AS spire
 
 # biscuit-python 0.4.0 embeds PyO3 0.24.1, whose supported ceiling is 3.13.
 FROM python:3.13.14-slim-trixie@sha256:9662417aace5ae7b8e2609cce472b72a8958e134ba372808abe9cc1a0c0125e6
